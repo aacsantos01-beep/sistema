@@ -1,29 +1,36 @@
-import express from 'express';
-import cors from 'cors';
+import { VercelRequest, VercelResponse } from '@vercel/node';
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+export default (req: VercelRequest, res: VercelResponse) => {
+  // Configurar CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-app.get('/api/test', (req, res) => {
-    res.json({ message: 'API is working directly from /api/test' });
-});
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-app.post('/api/auth/login', (req, res) => {
+  const url = req.url || '';
+
+  if (url.includes('/api/test')) {
+    return res.status(200).json({ message: 'API is working directly from Vercel function' });
+  }
+
+  if (url.includes('/api/auth/login') && req.method === 'POST') {
     const { username, password } = req.body;
     if (username === 'admin' && password === 'admin123') {
-        res.json({ 
-            token: 'mock-token-for-testing',
-            user: { username: 'admin', role: 'admin' }
-        });
+      return res.status(200).json({ 
+        token: 'mock-token-for-testing',
+        user: { username: 'admin', role: 'admin' }
+      });
     } else {
-        res.status(401).json({ message: 'Credenciais inválidas' });
+      return res.status(401).json({ message: 'Credenciais inválidas' });
     }
-});
+  }
 
-// Fallback for other API routes
-app.all('/api/(.*)', (req, res) => {
-    res.json({ message: 'API catch-all reached', path: req.path });
-});
-
-export default app;
+  return res.status(200).json({ 
+    message: 'API catch-all reached', 
+    url, 
+    method: req.method 
+  });
+};
