@@ -46,15 +46,12 @@ const BudgetList: React.FC = () => {
   const fetchData = async () => {
     try {
       const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
-      const [prodRes, sellRes, setRes] = await Promise.all([
-        fetch(`${API_URL}/products`, { headers }),
+      const [sellRes, setRes] = await Promise.all([
         fetch(`${API_URL}/sellers`, { headers }),
         fetch(`${API_URL}/settings`, { headers })
       ]);
-      const prodData = await prodRes.json();
       const sellData = await sellRes.json();
       const setData = await setRes.json();
-      setProducts(prodData);
       setSellers(sellData);
       if (setData.company_name) setCompanyName(setData.company_name);
       if (setData.company_logo) setCompanyLogo(setData.company_logo);
@@ -471,6 +468,14 @@ const BudgetList: React.FC = () => {
               </div>
             </form>
           </div>
+        </div>
+      )}
+    </Layout>
+  );
+};
+
+export default BudgetList;
+     </div>
         </div>
       )}
     </Layout>

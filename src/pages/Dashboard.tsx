@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { DollarSign, Package, AlertTriangle, TrendingUp, CreditCard, FileText } from 'lucide-react';
+import { DollarSign, Package, TrendingUp, CreditCard, FileText } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import { authenticatedFetch } from '../services/api';
 import './Dashboard.css';

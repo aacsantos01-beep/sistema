@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { Plus, Search, Trash2, Edit2, CheckCircle, Clock, X, DollarSign } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, CheckCircle, Clock, X } from 'lucide-react';
 import { API_URL } from '../config';
 
 const PayableList: React.FC = () => {
