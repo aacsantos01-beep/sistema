@@ -11,15 +11,25 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 pg_1.types.setTypeParser(1700, (val) => parseFloat(val)); // NUMERIC/DECIMAL
 pg_1.types.setTypeParser(20, (val) => parseInt(val, 10)); // BIGINT
 dotenv_1.default.config();
+if (!process.env.DATABASE_URL) {
+    console.error('CRITICAL ERROR: DATABASE_URL is not defined in environment variables.');
+}
 const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
 // No Vercel/Produção, a DATABASE_URL deve ser fornecida
 // Localmente, você pode usar uma string de conexão ou variáveis individuais
 const pool = new pg_1.Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: {
+        rejectUnauthorized: false,
+    },
+    max: 10, // Limit connections for serverless
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
 });
 exports.db = pool;
 const initDb = async () => {
+    if (global.dbInitialized)
+        return;
     console.log('Initializing database connection...');
     let client;
     try {
@@ -128,6 +138,8 @@ const initDb = async () => {
             console.log('Default admin user created.');
         }
         await client.query('COMMIT');
+        global.dbInitialized = true;
+        console.log('Database initialization completed.');
     }
     catch (e) {
         if (client)

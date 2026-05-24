@@ -10,7 +10,7 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 // Use process.cwd() to get the root of the server directory
 const uploadDir = path_1.default.join(process.cwd(), 'uploads/products');
-if (!fs_1.default.existsSync(uploadDir)) {
+if (!process.env.VERCEL && !fs_1.default.existsSync(uploadDir)) {
     fs_1.default.mkdirSync(uploadDir, { recursive: true });
 }
 // Configure multer
@@ -50,7 +50,8 @@ const getProductById = async (req, res) => {
 exports.getProductById = getProductById;
 const createProduct = async (req, res) => {
     const { sku, name, category, supplier, price, stock } = req.body;
-    const image_url = req.file ? `/uploads/products/${req.file.filename}` : null;
+    const file = req.file;
+    const image_url = file ? `/uploads/products/${file.filename}` : null;
     try {
         const result = await database_1.db.query('INSERT INTO products (sku, name, category, supplier, price, stock, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id', [sku, name, category, supplier, price, stock, image_url]);
         res.status(201).json({ id: result.rows[0].id, sku, name, category, supplier, price, stock, image_url });
@@ -67,8 +68,9 @@ const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { sku, name, category, supplier, price, stock } = req.body;
     let image_url = req.body.image_url;
-    if (req.file) {
-        image_url = `/uploads/products/${req.file.filename}`;
+    const file = req.file;
+    if (file) {
+        image_url = `/uploads/products/${file.filename}`;
     }
     try {
         const result = await database_1.db.query('UPDATE products SET sku = $1, name = $2, category = $3, supplier = $4, price = $5, stock = $6, image_url = $7 WHERE id = $8', [sku, name, category, supplier, price, stock, image_url, id]);

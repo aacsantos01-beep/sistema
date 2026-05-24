@@ -11,7 +11,7 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 // Configure multer for user profile photos
 const uploadDir = path_1.default.join(process.cwd(), 'uploads/users');
-if (!fs_1.default.existsSync(uploadDir)) {
+if (!process.env.VERCEL && !fs_1.default.existsSync(uploadDir)) {
     fs_1.default.mkdirSync(uploadDir, { recursive: true });
 }
 const storage = multer_1.default.diskStorage({
@@ -69,7 +69,8 @@ const updateUser = async (req, res) => {
 exports.updateUser = updateUser;
 const updateProfile = async (req, res) => {
     const userId = req.user.id;
-    const image_url = req.file ? `/uploads/users/${req.file.filename}` : null;
+    const file = req.file;
+    const image_url = file ? `/uploads/users/${file.filename}` : null;
     if (!image_url) {
         return res.status(400).json({ message: 'Nenhuma imagem enviada' });
     }

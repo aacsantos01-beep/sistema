@@ -24,9 +24,19 @@ app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 // Serve static uploads
 app.use('/uploads', express_1.default.static(path_1.default.join(process.cwd(), 'uploads')));
-// Initialize database
-(0, database_1.initDb)().catch(err => {
-    console.error('Failed to initialize database:', err);
+// Middleware to ensure DB is initialized
+let dbInitialized = false;
+app.use(async (req, res, next) => {
+    if (!dbInitialized && req.path !== '/api/health') {
+        try {
+            await (0, database_1.initDb)();
+            dbInitialized = true;
+        }
+        catch (err) {
+            console.error('Database lazy init failed:', err);
+        }
+    }
+    next();
 });
 // Health check
 app.get('/api/health', async (req, res) => {

@@ -30,7 +30,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "CI=false react-scripts build"
+    "build-server": "cd server && npm install && npm run build",
+    "build": "npm run build-server && CI=false react-scripts build"
   },
   "eslintConfig": {
     "extends": [

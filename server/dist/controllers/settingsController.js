@@ -10,7 +10,7 @@ const path_1 = __importDefault(require("path"));
 const multer_1 = __importDefault(require("multer"));
 // Configure multer for system/logo
 const uploadDir = path_1.default.join(process.cwd(), 'uploads/system');
-if (!fs_1.default.existsSync(uploadDir)) {
+if (!process.env.VERCEL && !fs_1.default.existsSync(uploadDir)) {
     fs_1.default.mkdirSync(uploadDir, { recursive: true });
 }
 const storage = multer_1.default.diskStorage({
@@ -39,10 +39,11 @@ const getSettings = async (req, res) => {
 exports.getSettings = getSettings;
 const updateLogo = async (req, res) => {
     try {
-        if (!req.file) {
+        const file = req.file;
+        if (!file) {
             return res.status(400).json({ message: 'No file uploaded' });
         }
-        const logoUrl = `/uploads/system/${req.file.filename}`;
+        const logoUrl = `/uploads/system/${file.filename}`;
         // Check if logo setting exists
         const result = await database_1.db.query('SELECT * FROM settings WHERE key = $1', ['company_logo']);
         const existing = result.rows[0];
