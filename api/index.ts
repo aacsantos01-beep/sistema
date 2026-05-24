@@ -1,7 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-
-export default (req: VercelRequest, res: VercelResponse) => {
-  // Configurar CORS
+export default (req: any, res: any) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -13,7 +10,7 @@ export default (req: VercelRequest, res: VercelResponse) => {
   const url = req.url || '';
 
   if (url.includes('/api/test')) {
-    return res.status(200).json({ message: 'API is working directly from Vercel function' });
+    return res.status(200).json({ status: 'ok', message: 'API is working' });
   }
 
   if (url.includes('/api/auth/login') && req.method === 'POST') {
@@ -29,8 +26,7 @@ export default (req: VercelRequest, res: VercelResponse) => {
   }
 
   return res.status(200).json({ 
-    message: 'API catch-all reached', 
-    url, 
-    method: req.method 
+    message: 'API default reach', 
+    url
   });
 };
