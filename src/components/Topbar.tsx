@@ -4,10 +4,10 @@ import { API_URL, BASE_URL } from '../config';
 import './Topbar.css';
 
 interface TopbarProps {
-  title: string;
+  title?: string;
 }
 
-const Topbar: React.FC<TopbarProps> = ({ title }) => {
+const Topbar: React.FC<TopbarProps> = ({ title = 'Sistema' }) => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
