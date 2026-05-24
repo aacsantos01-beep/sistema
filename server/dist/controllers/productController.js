@@ -24,20 +24,21 @@ const storage = multer_1.default.diskStorage({
     }
 });
 exports.upload = (0, multer_1.default)({ storage });
-const getAllProducts = (req, res) => {
+const getAllProducts = async (req, res) => {
     try {
-        const products = database_1.db.prepare('SELECT * FROM products ORDER BY id DESC').all();
-        res.json(products);
+        const result = await database_1.db.query('SELECT * FROM products ORDER BY id DESC');
+        res.json(result.rows);
     }
     catch (error) {
         res.status(500).json({ message: 'Error fetching products' });
     }
 };
 exports.getAllProducts = getAllProducts;
-const getProductById = (req, res) => {
+const getProductById = async (req, res) => {
     const { id } = req.params;
     try {
-        const product = database_1.db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+        const result = await database_1.db.query('SELECT * FROM products WHERE id = $1', [id]);
+        const product = result.rows[0];
         if (!product)
             return res.status(404).json({ message: 'Product not found' });
         res.json(product);
@@ -47,22 +48,22 @@ const getProductById = (req, res) => {
     }
 };
 exports.getProductById = getProductById;
-const createProduct = (req, res) => {
+const createProduct = async (req, res) => {
     const { sku, name, category, supplier, price, stock } = req.body;
     const image_url = req.file ? `/uploads/products/${req.file.filename}` : null;
     try {
-        const result = database_1.db.prepare('INSERT INTO products (sku, name, category, supplier, price, stock, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)').run(sku, name, category, supplier, price, stock, image_url);
-        res.status(201).json({ id: result.lastInsertRowid, sku, name, category, supplier, price, stock, image_url });
+        const result = await database_1.db.query('INSERT INTO products (sku, name, category, supplier, price, stock, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id', [sku, name, category, supplier, price, stock, image_url]);
+        res.status(201).json({ id: result.rows[0].id, sku, name, category, supplier, price, stock, image_url });
     }
     catch (error) {
-        if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        if (error.code === '23505') { // Postgres unique constraint violation
             return res.status(400).json({ message: 'SKU already exists' });
         }
         res.status(500).json({ message: 'Error creating product: ' + error.message });
     }
 };
 exports.createProduct = createProduct;
-const updateProduct = (req, res) => {
+const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { sku, name, category, supplier, price, stock } = req.body;
     let image_url = req.body.image_url;
@@ -70,8 +71,8 @@ const updateProduct = (req, res) => {
         image_url = `/uploads/products/${req.file.filename}`;
     }
     try {
-        const result = database_1.db.prepare('UPDATE products SET sku = ?, name = ?, category = ?, supplier = ?, price = ?, stock = ?, image_url = ? WHERE id = ?').run(sku, name, category, supplier, price, stock, image_url, id);
-        if (result.changes === 0)
+        const result = await database_1.db.query('UPDATE products SET sku = $1, name = $2, category = $3, supplier = $4, price = $5, stock = $6, image_url = $7 WHERE id = $8', [sku, name, category, supplier, price, stock, image_url, id]);
+        if (result.rowCount === 0)
             return res.status(404).json({ message: 'Product not found' });
         res.json({ id, sku, name, category, supplier, price, stock, image_url });
     }
@@ -80,30 +81,32 @@ const updateProduct = (req, res) => {
     }
 };
 exports.updateProduct = updateProduct;
-const adjustStock = (req, res) => {
+const adjustStock = async (req, res) => {
     const { id } = req.params;
     const { amount } = req.body; // positive for add, negative for remove
     try {
-        const product = database_1.db.prepare('SELECT stock, name FROM products WHERE id = ?').get(id);
+        const result = await database_1.db.query('SELECT stock, name FROM products WHERE id = $1', [id]);
+        const product = result.rows[0];
         if (!product)
             return res.status(404).json({ message: 'Product not found' });
         if (product.stock + amount < 0) {
             return res.status(400).json({ message: `Estoque insuficiente para o produto ${product.name}. Saldo atual: ${product.stock}` });
         }
-        database_1.db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?').run(amount, id);
-        const updatedProduct = database_1.db.prepare('SELECT * FROM products WHERE id = ?').get(id);
-        res.json(updatedProduct);
+        await database_1.db.query('UPDATE products SET stock = stock + $1 WHERE id = $2', [amount, id]);
+        const updateResult = await database_1.db.query('SELECT * FROM products WHERE id = $1', [id]);
+        res.json(updateResult.rows[0]);
     }
     catch (error) {
         res.status(500).json({ message: 'Error adjusting stock: ' + error.message });
     }
 };
 exports.adjustStock = adjustStock;
-const deleteProduct = (req, res) => {
+const deleteProduct = async (req, res) => {
     const { id } = req.params;
     try {
         // Find product to delete image
-        const product = database_1.db.prepare('SELECT image_url FROM products WHERE id = ?').get(id);
+        const result = await database_1.db.query('SELECT image_url FROM products WHERE id = $1', [id]);
+        const product = result.rows[0];
         if (product && product.image_url) {
             // Remove leading slash if present
             const relativePath = product.image_url.startsWith('/') ? product.image_url.substring(1) : product.image_url;
@@ -112,8 +115,8 @@ const deleteProduct = (req, res) => {
                 fs_1.default.unlinkSync(filePath);
             }
         }
-        const result = database_1.db.prepare('DELETE FROM products WHERE id = ?').run(id);
-        if (result.changes === 0)
+        const deleteResult = await database_1.db.query('DELETE FROM products WHERE id = $1', [id]);
+        if (deleteResult.rowCount === 0)
             return res.status(404).json({ message: 'Product not found' });
         res.json({ message: 'Product deleted' });
     }

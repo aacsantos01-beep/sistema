@@ -11,10 +11,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // Configuração do Banco de Dados
-$dbPath = __DIR__ . '/../../server/data/ir_assistencia.db';
+$host = 'db.knycuhczgzagxnmvvkwa.supabase.co';
+$port = '5432';
+$dbname = 'postgres';
+$user = 'postgres';
+$pass = 'REDACTED_ROTATED_PASSWORD';
 
 try {
-    $pdo = new PDO("sqlite:" . $dbPath);
+    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;user=$user;password=$pass";
+    $pdo = new PDO($dsn);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 } catch (PDOException $e) {

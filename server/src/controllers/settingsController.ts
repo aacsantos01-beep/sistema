@@ -6,15 +6,15 @@ import multer from 'multer';
 
 // Configure multer for system/logo
 const uploadDir = path.join(process.cwd(), 'uploads/system');
-if (!fs.existsSync(uploadDir)) {
+if (!process.env.VERCEL && !fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: (req: Request, file: Express.Multer.File, cb: any) => {
         cb(null, uploadDir);
     },
-    filename: (req, file, cb) => {
+    filename: (req: Request, file: Express.Multer.File, cb: any) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
     }
@@ -35,13 +35,14 @@ export const getSettings = async (req: Request, res: Response) => {
     }
 };
 
-export const updateLogo = async (req: any, res: Response) => {
+export const updateLogo = async (req: Request, res: Response) => {
     try {
-        if (!req.file) {
+        const file = req.file as Express.Multer.File;
+        if (!file) {
             return res.status(400).json({ message: 'No file uploaded' });
         }
 
-        const logoUrl = `/uploads/system/${req.file.filename}`;
+        const logoUrl = `/uploads/system/${file.filename}`;
         
         // Check if logo setting exists
         const result = await db.query('SELECT * FROM settings WHERE key = $1', ['company_logo']);

@@ -6,16 +6,16 @@ import fs from 'fs';
 
 // Use process.cwd() to get the root of the server directory
 const uploadDir = path.join(process.cwd(), 'uploads/products');
-if (!fs.existsSync(uploadDir)) {
+if (!process.env.VERCEL && !fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // Configure multer
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: (req: Request, file: Express.Multer.File, cb: any) => {
         cb(null, uploadDir);
     },
-    filename: (req, file, cb) => {
+    filename: (req: Request, file: Express.Multer.File, cb: any) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, uniqueSuffix + path.extname(file.originalname));
     }
@@ -46,7 +46,8 @@ export const getProductById = async (req: Request, res: Response) => {
 
 export const createProduct = async (req: Request, res: Response) => {
     const { sku, name, category, supplier, price, stock } = req.body;
-    const image_url = req.file ? `/uploads/products/${req.file.filename}` : null;
+    const file = req.file as Express.Multer.File;
+    const image_url = file ? `/uploads/products/${file.filename}` : null;
     
     try {
         const result = await db.query(
@@ -66,9 +67,10 @@ export const updateProduct = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { sku, name, category, supplier, price, stock } = req.body;
     let image_url = req.body.image_url;
+    const file = req.file as Express.Multer.File;
 
-    if (req.file) {
-        image_url = `/uploads/products/${req.file.filename}`;
+    if (file) {
+        image_url = `/uploads/products/${file.filename}`;
     }
 
     try {

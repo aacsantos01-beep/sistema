@@ -41,6 +41,5 @@ router.get('/', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, us
 router.post('/', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, userController.createUser);
 router.put('/:id', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, userController.updateUser);
 router.delete('/:id', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, userController.deleteUser);
-// Profile photo upload
-router.post('/profile/photo', authMiddleware_1.authenticateToken, userController.upload.single('image'), userController.updateProfile);
+router.post('/profile/photo', authMiddleware_1.authenticateToken, userController.upload.single('photo'), userController.updateProfile);
 exports.default = router;

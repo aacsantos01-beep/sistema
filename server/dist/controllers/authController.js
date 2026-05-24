@@ -7,11 +7,12 @@ exports.getMe = exports.login = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const database_1 = require("../db/database");
-const JWT_SECRET = process.env.JWT_SECRET || 'tatutech_secret_key_2026';
-const login = (req, res) => {
+const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED_ROTATED_JWT_SECRET';
+const login = async (req, res) => {
     const { username, password } = req.body;
     try {
-        const user = database_1.db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+        const result = await database_1.db.query('SELECT * FROM users WHERE username = $1', [username]);
+        const user = result.rows[0];
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }

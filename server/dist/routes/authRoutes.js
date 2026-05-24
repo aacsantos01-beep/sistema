@@ -34,13 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const productController = __importStar(require("../controllers/productController"));
-const authMiddleware_1 = require("../middleware/authMiddleware");
+const authController = __importStar(require("../controllers/authController"));
 const router = (0, express_1.Router)();
-router.get('/', authMiddleware_1.authenticateToken, productController.getAllProducts);
-router.get('/:id', authMiddleware_1.authenticateToken, productController.getProductById);
-router.post('/', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, productController.upload.single('image'), productController.createProduct);
-router.put('/:id', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, productController.upload.single('image'), productController.updateProduct);
-router.delete('/:id', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, productController.deleteProduct);
-router.post('/:id/adjust-stock', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, productController.adjustStock);
+router.post('/login', authController.login);
 exports.default = router;

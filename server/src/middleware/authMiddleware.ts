@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import * as express from 'express';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED_ROTATED_JWT_SECRET';
 
-export const authenticateToken = (req: any, res: Response, next: NextFunction) => {
+export const authenticateToken = (req: any, res: express.Response, next: express.NextFunction) => {
     const authHeader = req.headers.authorization;
     console.log('Auth Header:', authHeader);
 
@@ -14,7 +14,7 @@ export const authenticateToken = (req: any, res: Response, next: NextFunction) =
     const token = authHeader.split(' ')[1];
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
         req.user = decoded;
         next();
     } catch (error: any) {
@@ -23,7 +23,7 @@ export const authenticateToken = (req: any, res: Response, next: NextFunction) =
     }
 };
 
-export const isAdmin = (req: any, res: Response, next: NextFunction) => {
+export const isAdmin = (req: any, res: express.Response, next: express.NextFunction) => {
     if (req.user && req.user.role === 'admin') {
         next();
     } else {

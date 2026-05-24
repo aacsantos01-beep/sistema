@@ -7,15 +7,15 @@ import fs from 'fs';
 
 // Configure multer for user profile photos
 const uploadDir = path.join(process.cwd(), 'uploads/users');
-if (!fs.existsSync(uploadDir)) {
+if (!process.env.VERCEL && !fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: (req: Request, file: Express.Multer.File, cb: any) => {
         cb(null, uploadDir);
     },
-    filename: (req, file, cb) => {
+    filename: (req: Request, file: Express.Multer.File, cb: any) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
     }
@@ -71,7 +71,8 @@ export const updateUser = async (req: Request, res: Response) => {
 
 export const updateProfile = async (req: any, res: Response) => {
     const userId = req.user.id;
-    const image_url = req.file ? `/uploads/users/${req.file.filename}` : null;
+    const file = req.file as Express.Multer.File;
+    const image_url = file ? `/uploads/users/${file.filename}` : null;
 
     if (!image_url) {
         return res.status(400).json({ message: 'Nenhuma imagem enviada' });
@@ -112,3 +113,4 @@ export const deleteUser = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error deleting user' });
     }
 };
+

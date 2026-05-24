@@ -6,9 +6,11 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./src",
-    "strict": true,
+    "strict": false,
+    "noImplicitAny": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "noEmit": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {

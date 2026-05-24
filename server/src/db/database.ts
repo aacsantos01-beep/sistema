@@ -1,8 +1,16 @@
-import { Pool } from 'pg';
+import { Pool, types } from 'pg';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 
+// Force numeric types to be parsed as numbers instead of strings
+types.setTypeParser(1700, (val) => parseFloat(val)); // NUMERIC/DECIMAL
+types.setTypeParser(20, (val) => parseInt(val, 10)); // BIGINT
+
 dotenv.config();
+
+if (!process.env.DATABASE_URL) {
+    console.error('CRITICAL ERROR: DATABASE_URL is not defined in environment variables.');
+}
 
 const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
 
@@ -10,12 +18,17 @@ const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
 // Localmente, você pode usar uma string de conexão ou variáveis individuais
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: isVercel ? { rejectUnauthorized: false } : false
+  ssl: { rejectUnauthorized: false }
 });
 
 const initDb = async () => {
-    const client = await pool.connect();
+    if ((global as any).dbInitialized) return;
+    
+    console.log('Initializing database connection...');
+    let client;
     try {
+        client = await pool.connect();
+        console.log('Connected to PostgreSQL successfully.');
         await client.query('BEGIN');
 
         await client.query(`
@@ -122,12 +135,14 @@ const initDb = async () => {
         }
 
         await client.query('COMMIT');
+        (global as any).dbInitialized = true;
+        console.log('Database initialization completed.');
     } catch (e) {
-        await client.query('ROLLBACK');
+        if (client) await client.query('ROLLBACK');
         console.error('Error initializing database:', e);
         throw e;
     } finally {
-        client.release();
+        if (client) client.release();
     }
 };
 

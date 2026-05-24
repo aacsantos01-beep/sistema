@@ -34,13 +34,11 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const productController = __importStar(require("../controllers/productController"));
+const sellerController = __importStar(require("../controllers/sellerController"));
 const authMiddleware_1 = require("../middleware/authMiddleware");
 const router = (0, express_1.Router)();
-router.get('/', authMiddleware_1.authenticateToken, productController.getAllProducts);
-router.get('/:id', authMiddleware_1.authenticateToken, productController.getProductById);
-router.post('/', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, productController.upload.single('image'), productController.createProduct);
-router.put('/:id', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, productController.upload.single('image'), productController.updateProduct);
-router.delete('/:id', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, productController.deleteProduct);
-router.post('/:id/adjust-stock', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, productController.adjustStock);
+router.get('/', authMiddleware_1.authenticateToken, sellerController.getAllSellers);
+router.post('/', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, sellerController.createSeller);
+router.put('/:id', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, sellerController.updateSeller);
+router.delete('/:id', authMiddleware_1.authenticateToken, authMiddleware_1.isAdmin, sellerController.deleteSeller);
 exports.default = router;

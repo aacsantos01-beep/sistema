@@ -1,8 +1,10 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
-import { initDb } from './db/database';
+import { initDb, db } from './db/database';
 import authRoutes from './routes/authRoutes';
 import productRoutes from './routes/productRoutes';
 import saleRoutes from './routes/saleRoutes';
@@ -13,8 +15,6 @@ import userRoutes from './routes/userRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 import payableRoutes from './routes/payableRoutes';
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -24,9 +24,28 @@ app.use(express.json());
 // Serve static uploads
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// Initialize database
-initDb().catch(err => {
-    console.error('Failed to initialize database:', err);
+// Middleware to ensure DB is initialized
+let dbInitialized = false;
+app.use(async (req, res, next) => {
+    if (!dbInitialized && req.path !== '/api/health') {
+        try {
+            await initDb();
+            dbInitialized = true;
+        } catch (err) {
+            console.error('Database lazy init failed:', err);
+        }
+    }
+    next();
+});
+
+// Health check
+app.get('/api/health', async (req, res) => {
+    try {
+        const result = await db.query('SELECT NOW()');
+        res.json({ status: 'ok', database: 'connected', time: result.rows[0].now });
+    } catch (error: any) {
+        res.status(500).json({ status: 'error', database: 'disconnected', error: error.message });
+    }
 });
 
 // Routes
