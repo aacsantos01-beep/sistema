@@ -11,7 +11,6 @@ const BudgetList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [sellers, setSellers] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
   const [companyName, setCompanyName] = useState('IR Assistência Técnica');
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
   
@@ -468,14 +467,6 @@ const BudgetList: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
-      )}
-    </Layout>
-  );
-};
-
-export default BudgetList;
-     </div>
         </div>
       )}
     </Layout>
