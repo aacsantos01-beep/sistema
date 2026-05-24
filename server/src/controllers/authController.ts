@@ -5,11 +5,12 @@ import { db } from '../db/database';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED_ROTATED_JWT_SECRET';
 
-export const login = (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response) => {
     const { username, password } = req.body;
 
     try {
-        const user: any = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+        const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
+        const user = result.rows[0];
 
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });

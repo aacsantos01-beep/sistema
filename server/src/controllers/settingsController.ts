@@ -22,10 +22,10 @@ const storage = multer.diskStorage({
 
 export const upload = multer({ storage });
 
-export const getSettings = (req: Request, res: Response) => {
+export const getSettings = async (req: Request, res: Response) => {
     try {
-        const settings = db.prepare('SELECT * FROM settings').all();
-        const settingsMap = settings.reduce((acc: any, curr: any) => {
+        const result = await db.query('SELECT * FROM settings');
+        const settingsMap = result.rows.reduce((acc: any, curr: any) => {
             acc[curr.key] = curr.value;
             return acc;
         }, {});
@@ -35,7 +35,7 @@ export const getSettings = (req: Request, res: Response) => {
     }
 };
 
-export const updateLogo = (req: any, res: Response) => {
+export const updateLogo = async (req: any, res: Response) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'No file uploaded' });
@@ -44,7 +44,8 @@ export const updateLogo = (req: any, res: Response) => {
         const logoUrl = `/uploads/system/${req.file.filename}`;
         
         // Check if logo setting exists
-        const existing: any = db.prepare('SELECT * FROM settings WHERE key = ?').get('company_logo');
+        const result = await db.query('SELECT * FROM settings WHERE key = $1', ['company_logo']);
+        const existing = result.rows[0];
         
         if (existing) {
             // Delete old logo file if exists
@@ -56,9 +57,9 @@ export const updateLogo = (req: any, res: Response) => {
                     console.error('Error deleting old logo:', e);
                 }
             }
-            db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(logoUrl, 'company_logo');
+            await db.query('UPDATE settings SET value = $1 WHERE key = $2', [logoUrl, 'company_logo']);
         } else {
-            db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('company_logo', logoUrl);
+            await db.query('INSERT INTO settings (key, value) VALUES ($1, $2)', ['company_logo', logoUrl]);
         }
 
         res.json({ logoUrl, message: 'Logo updated successfully' });
@@ -68,14 +69,14 @@ export const updateLogo = (req: any, res: Response) => {
     }
 };
 
-export const updateCompanyName = (req: Request, res: Response) => {
+export const updateCompanyName = async (req: Request, res: Response) => {
     const { name } = req.body;
     try {
-        const existing = db.prepare('SELECT * FROM settings WHERE key = ?').get('company_name');
-        if (existing) {
-            db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(name, 'company_name');
+        const result = await db.query('SELECT * FROM settings WHERE key = $1', ['company_name']);
+        if (result.rows.length > 0) {
+            await db.query('UPDATE settings SET value = $1 WHERE key = $2', [name, 'company_name']);
         } else {
-            db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('company_name', name);
+            await db.query('INSERT INTO settings (key, value) VALUES ($1, $2)', ['company_name', name]);
         }
         res.json({ message: 'Company name updated successfully' });
     } catch (error) {

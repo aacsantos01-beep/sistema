@@ -23,44 +23,45 @@ const storage = multer.diskStorage({
 
 export const upload = multer({ storage });
 
-export const getAllUsers = (req: Request, res: Response) => {
+export const getAllUsers = async (req: Request, res: Response) => {
     try {
-        const users = db.prepare('SELECT id, username, role, image_url FROM users ORDER BY username ASC').all();
-        res.json(users);
+        const result = await db.query('SELECT id, username, role, image_url FROM users ORDER BY username ASC');
+        res.json(result.rows);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching users' });
     }
 };
 
-export const createUser = (req: Request, res: Response) => {
+export const createUser = async (req: Request, res: Response) => {
     const { username, password, role } = req.body;
     try {
         const hashedPassword = bcrypt.hashSync(password, 10);
-        const result = db.prepare(
-            'INSERT INTO users (username, password, role) VALUES (?, ?, ?)'
-        ).run(username, hashedPassword, role || 'vendedor');
+        const result = await db.query(
+            'INSERT INTO users (username, password, role) VALUES ($1, $2, $3) RETURNING id',
+            [username, hashedPassword, role || 'vendedor']
+        );
         
-        res.status(201).json({ id: result.lastInsertRowid, username, role: role || 'vendedor' });
+        res.status(201).json({ id: result.rows[0].id, username, role: role || 'vendedor' });
     } catch (error: any) {
-        if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        if (error.code === '23505') {
             return res.status(400).json({ message: 'Username already exists' });
         }
         res.status(500).json({ message: 'Error creating user' });
     }
 };
 
-export const updateUser = (req: Request, res: Response) => {
+export const updateUser = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { username, role, password } = req.body;
     
     try {
         if (password) {
             const hashedPassword = bcrypt.hashSync(password, 10);
-            db.prepare('UPDATE users SET username = ?, role = ?, password = ? WHERE id = ?')
-              .run(username, role, hashedPassword, id);
+            await db.query('UPDATE users SET username = $1, role = $2, password = $3 WHERE id = $4',
+              [username, role, hashedPassword, id]);
         } else {
-            db.prepare('UPDATE users SET username = ?, role = ? WHERE id = ?')
-              .run(username, role, id);
+            await db.query('UPDATE users SET username = $1, role = $2 WHERE id = $3',
+              [username, role, id]);
         }
         res.json({ id, username, role });
     } catch (error) {
@@ -68,7 +69,7 @@ export const updateUser = (req: Request, res: Response) => {
     }
 };
 
-export const updateProfile = (req: any, res: Response) => {
+export const updateProfile = async (req: any, res: Response) => {
     const userId = req.user.id;
     const image_url = req.file ? `/uploads/users/${req.file.filename}` : null;
 
@@ -78,7 +79,8 @@ export const updateProfile = (req: any, res: Response) => {
 
     try {
         // Delete old image if exists
-        const oldUser: any = db.prepare('SELECT image_url FROM users WHERE id = ?').get(userId);
+        const result = await db.query('SELECT image_url FROM users WHERE id = $1', [userId]);
+        const oldUser = result.rows[0];
         if (oldUser && oldUser.image_url) {
             const oldPath = path.join(process.cwd(), oldUser.image_url.substring(1));
             if (fs.existsSync(oldPath)) {
@@ -86,24 +88,25 @@ export const updateProfile = (req: any, res: Response) => {
             }
         }
 
-        db.prepare('UPDATE users SET image_url = ? WHERE id = ?').run(image_url, userId);
+        await db.query('UPDATE users SET image_url = $1 WHERE id = $2', [image_url, userId]);
         res.json({ message: 'Perfil atualizado com sucesso', image_url });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao atualizar perfil' });
     }
 };
 
-export const deleteUser = (req: Request, res: Response) => {
+export const deleteUser = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
-        const user: any = db.prepare('SELECT image_url FROM users WHERE id = ?').get(id);
+        const result = await db.query('SELECT image_url FROM users WHERE id = $1', [id]);
+        const user = result.rows[0];
         if (user && user.image_url) {
             const oldPath = path.join(process.cwd(), user.image_url.substring(1));
             if (fs.existsSync(oldPath)) {
                 fs.unlinkSync(oldPath);
             }
         }
-        db.prepare('DELETE FROM users WHERE id = ?').run(id);
+        await db.query('DELETE FROM users WHERE id = $1', [id]);
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error deleting user' });

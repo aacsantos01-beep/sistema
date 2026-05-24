@@ -25,7 +25,9 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Initialize database
-initDb();
+initDb().catch(err => {
+    console.error('Failed to initialize database:', err);
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
