@@ -2,7 +2,11 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 
-const dbPath = path.resolve(__dirname, '../../data/ir_assistencia.db');
+const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
+const dbPath = isVercel 
+    ? path.join('/tmp', 'ir_assistencia.db')
+    : path.resolve(__dirname, '../../data/ir_assistencia.db');
+
 const dbDir = path.dirname(dbPath);
 
 // Ensure data directory exists
