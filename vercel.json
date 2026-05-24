@@ -3,22 +3,11 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "server/src/index.ts"
-    },
-    {
-      "source": "/uploads/(.*)",
-      "destination": "server/uploads/$1"
+      "destination": "/api/index.ts"
     },
     {
       "source": "/(.*)",
-      "destination": "client/$1"
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/client/index.html",
-      "permanent": false
+      "destination": "/client/$1"
     }
   ]
 }
