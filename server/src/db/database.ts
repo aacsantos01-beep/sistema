@@ -18,7 +18,12 @@ const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
 // Localmente, você pode usar uma string de conexão ou variáveis individuais
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: {
+    rejectUnauthorized: false,
+  },
+  max: 10, // Limit connections for serverless
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
 
 const initDb = async () => {
