@@ -1,28 +1,24 @@
 {
   "version": 2,
-  "name": "sistema-ir-assistencia",
-  "builds": [
+  "rewrites": [
     {
-      "src": "client/package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "build" }
+      "source": "/api/(.*)",
+      "destination": "server/src/index.ts"
     },
     {
-      "src": "server/src/index.ts",
-      "use": "@vercel/node"
+      "source": "/uploads/(.*)",
+      "destination": "server/uploads/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "client/$1"
     }
   ],
-  "routes": [
+  "redirects": [
     {
-      "src": "/api/(.*)",
-      "dest": "server/src/index.ts"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "client/index.html"
+      "source": "/",
+      "destination": "/client/index.html",
+      "permanent": false
     }
   ]
 }
