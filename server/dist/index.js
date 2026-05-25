@@ -62,8 +62,8 @@ app.use('/api/payables', payableRoutes_1.default);
 app.get('/', (req, res) => {
     res.send('IR Assistência Técnica API is running');
 });
-// Start server
-if (process.env.NODE_ENV !== 'production') {
+// Start server - ONLY locally
+if (!process.env.VERCEL) {
     app.listen(PORT, () => {
         console.log(`Server is running on http://localhost:${PORT}`);
     });

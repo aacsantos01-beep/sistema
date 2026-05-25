@@ -1,4 +1,4 @@
-const app = require('../server/dist/index');
+import app from '../server/dist/index.js';
 
 // Handle both ES Module default export and CommonJS
-module.exports = app.default || app;
+export default app.default || app;
