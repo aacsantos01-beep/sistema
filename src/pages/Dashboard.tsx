@@ -77,7 +77,7 @@ const Dashboard: React.FC = () => {
           </head>
           <body>
             <div class="header">
-              ${settings.company_logo ? `<img src="${BASE_URL}${settings.company_logo}" alt="Logo" />` : ''}
+              ${settings.company_logo ? `<img src="${settings.company_logo.startsWith('http') ? settings.company_logo : `${BASE_URL}${settings.company_logo}`}" alt="Logo" />` : ''}
               <h1>RELATÓRIO FINANCEIRO MENSAL</h1>
               <p>${settings.company_name || 'IR Assistência Técnica'}</p>
               <p>Referência: ${data.month}</p>

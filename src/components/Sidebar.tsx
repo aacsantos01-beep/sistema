@@ -38,7 +38,11 @@ const Sidebar: React.FC = () => {
       <div className="sidebar-header">
         <Link to="/" className="sidebar-brand-link">
           {companyLogo && (
-            <img src={`${BASE_URL}${companyLogo}`} alt="Logo" className="sidebar-logo" />
+            <img 
+              src={companyLogo.startsWith('http') ? companyLogo : `${BASE_URL}${companyLogo}`} 
+              alt="Logo" 
+              className="sidebar-logo" 
+            />
           )}
           <h1>{companyName}</h1>
         </Link>

@@ -136,7 +136,7 @@ const BudgetList: React.FC = () => {
           </head>
           <body>
             <div class="header">
-              ${companyLogo ? `<img src="${BASE_URL}${companyLogo}" alt="Logo" />` : ''}
+              ${companyLogo ? `<img src="${companyLogo.startsWith('http') ? companyLogo : `${BASE_URL}${companyLogo}`}" alt="Logo" />` : ''}
               <h1>${companyName}</h1>
               <p>SOLUÇÕES EM TECNOLOGIA E ASSISTÊNCIA TÉCNICA</p>
             </div>
