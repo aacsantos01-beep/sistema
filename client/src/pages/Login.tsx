@@ -43,7 +43,7 @@ const Login: React.FC = () => {
       <div className="login-card">
         <div className="login-header">
           <img 
-            src="https://breezy-violet-eierwzf7.edgeone.app/logo-1776994454972-249486477.jpeg" 
+            src="https://initial-indigo-hu2meskc.edgeone.app/logo-1776994454972-249486477.jpeg" 
             alt="Logo" 
             className="login-logo" 
           />
