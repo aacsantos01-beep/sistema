@@ -20,9 +20,23 @@
   color: var(--primary-color);
 }
 
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .action-btn.view {
   background-color: #F0F9FF;
   color: #0369A1;
+}
+
+.action-btn.delete {
+  background-color: #FEF2F2;
+  color: #991B1B;
+}
+
+.action-btn.delete:hover {
+  background-color: #FEE2E2;
 }
 
 .action-btn.view:hover {

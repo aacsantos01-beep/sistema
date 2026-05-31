@@ -3,7 +3,7 @@ import { db } from '../db/database';
 
 export const getAllPayables = async (req: Request, res: Response) => {
     try {
-        const result = await db.query('SELECT * FROM payables ORDER BY due_date DESC');
+        const result = await db.query('SELECT * FROM payables WHERE is_deleted = FALSE ORDER BY due_date DESC');
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching payables' });
@@ -13,7 +13,7 @@ export const getAllPayables = async (req: Request, res: Response) => {
 export const getPayableById = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
-        const result = await db.query('SELECT * FROM payables WHERE id = $1', [id]);
+        const result = await db.query('SELECT * FROM payables WHERE id = $1 AND is_deleted = FALSE', [id]);
         const payable = result.rows[0];
         if (!payable) return res.status(404).json({ message: 'Payable not found' });
         res.json(payable);
@@ -70,7 +70,7 @@ export const updatePayableStatus = async (req: Request, res: Response) => {
 export const deletePayable = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
-        const result = await db.query('DELETE FROM payables WHERE id = $1', [id]);
+        const result = await db.query('UPDATE payables SET is_deleted = TRUE WHERE id = $1', [id]);
         if (result.rowCount === 0) return res.status(404).json({ message: 'Payable not found' });
         res.json({ message: 'Payable deleted' });
     } catch (error: any) {

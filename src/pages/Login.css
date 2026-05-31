@@ -20,6 +20,13 @@
   margin-bottom: 2rem;
 }
 
+.login-logo {
+  width: 120px;
+  height: auto;
+  margin-bottom: 1rem;
+  object-fit: contain;
+}
+
 .login-header h1 {
   color: var(--primary-color);
   font-size: 2rem;

@@ -9,11 +9,49 @@ export const getAllSales = async (req: any, res: Response) => {
             FROM sales s 
             LEFT JOIN users u ON s.user_id = u.id 
             LEFT JOIN sellers sl ON s.seller_id = sl.id
+            WHERE s.is_deleted = FALSE
             ORDER BY s.id DESC
         `);
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching sales' });
+    }
+};
+
+export const deleteSale = async (req: any, res: Response) => {
+    const { id } = req.params;
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Check if sale exists and is not already deleted
+        const saleResult = await client.query('SELECT * FROM sales WHERE id = $1 AND is_deleted = FALSE', [id]);
+        if (saleResult.rows.length === 0) {
+            throw new Error('Venda não encontrada ou já excluída');
+        }
+
+        // Soft delete the sale
+        await client.query('UPDATE sales SET is_deleted = TRUE WHERE id = $1', [id]);
+
+        // Get sale items to restock
+        const itemsResult = await client.query('SELECT product_id, quantity FROM sale_items WHERE sale_id = $1', [id]);
+        
+        for (const item of itemsResult.rows) {
+            if (item.product_id) {
+                await client.query(
+                    'UPDATE products SET stock = stock + $1 WHERE id = $2',
+                    [item.quantity, item.product_id]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: 'Venda excluída com sucesso e estoque restaurado!' });
+    } catch (error: any) {
+        await client.query('ROLLBACK');
+        res.status(400).json({ message: error.message });
+    } finally {
+        client.release();
     }
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, History, LogOut, Users, UserCog, FileText, CreditCard, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, History, LogOut, Users, UserCog, FileText, CreditCard, Settings as SettingsIcon, Trash2 } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import './Sidebar.css';
 
@@ -98,6 +98,13 @@ const Sidebar: React.FC = () => {
           <NavLink to="/settings" className={({ isActive }) => isActive ? 'active' : ''}>
             <SettingsIcon size={20} />
             <span>Gerenciamento</span>
+          </NavLink>
+        )}
+
+        {isAdmin && (
+          <NavLink to="/trash" className={({ isActive }) => isActive ? 'active' : ''}>
+            <Trash2 size={20} />
+            <span>Lixeira</span>
           </NavLink>
         )}
       </nav>

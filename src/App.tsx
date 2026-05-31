@@ -11,6 +11,7 @@ import SellerList from './pages/SellerList';
 import UserList from './pages/UserList';
 import Settings from './pages/Settings';
 import PayableList from './pages/PayableList';
+import Trash from './pages/Trash';
 import './App.css';
 
 // Protected Route Component
@@ -80,6 +81,14 @@ function App() {
           element={
             <ProtectedRoute adminOnly>
               <PayableList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/trash" 
+          element={
+            <ProtectedRoute adminOnly>
+              <Trash />
             </ProtectedRoute>
           } 
         />

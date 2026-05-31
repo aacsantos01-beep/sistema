@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { Eye, Search, Calendar, User } from 'lucide-react';
+import { Eye, Search, Calendar, User, Trash2 } from 'lucide-react';
 import { API_URL } from '../config';
 import './SaleList.css';
 
@@ -9,24 +9,47 @@ const SaleList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const fetchSales = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/sales`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (!response.ok) throw new Error('Falha ao buscar vendas');
+      const data = await response.json();
+      setSales(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching sales:', error);
+      setSales([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSales = async () => {
-      try {
-        const response = await fetch(`${API_URL}/sales`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        if (!response.ok) throw new Error('Falha ao buscar vendas');
-        const data = await response.json();
-        setSales(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error('Error fetching sales:', error);
-        setSales([]);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchSales();
   }, []);
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta venda? O estoque dos produtos será restaurado.')) return;
+
+    try {
+      const response = await fetch(`${API_URL}/sales/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Erro ao excluir venda');
+      }
+
+      alert('Venda excluída com sucesso!');
+      fetchSales(); // Refresh list
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
 
   const filteredSales = sales?.filter(s => 
     s?.id?.toString().includes(searchTerm) || 
@@ -80,9 +103,18 @@ const SaleList: React.FC = () => {
                   <td>{sale.username}</td>
                   <td className="total-cell">R$ {sale.total_amount.toFixed(2)}</td>
                   <td>
-                    <button className="action-btn view" title="Ver Detalhes">
-                      <Eye size={16} />
-                    </button>
+                    <div className="actions-cell">
+                      <button className="action-btn view" title="Ver Detalhes">
+                        <Eye size={16} />
+                      </button>
+                      <button 
+                        className="action-btn delete" 
+                        title="Excluir Venda"
+                        onClick={() => handleDelete(sale.id)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

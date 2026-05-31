@@ -40,6 +40,7 @@ export const getAllBudgets = async (req: any, res: Response) => {
             FROM budgets b
             LEFT JOIN users u ON b.user_id = u.id
             LEFT JOIN sellers sl ON b.seller_id = sl.id
+            WHERE b.is_deleted = FALSE
             ORDER BY b.id DESC
         `);
         res.json(result.rows);
@@ -56,7 +57,7 @@ export const getBudgetDetails = async (req: any, res: Response) => {
             FROM budgets b
             LEFT JOIN users u ON b.user_id = u.id
             LEFT JOIN sellers sl ON b.seller_id = sl.id
-            WHERE b.id = $1
+            WHERE b.id = $1 AND b.is_deleted = FALSE
         `, [id]);
 
         const budget = result.rows[0];
@@ -72,7 +73,8 @@ export const getBudgetDetails = async (req: any, res: Response) => {
 export const deleteBudget = async (req: any, res: Response) => {
     const { id } = req.params;
     try {
-        await db.query('DELETE FROM budgets WHERE id = $1', [id]);
+        const result = await db.query('UPDATE budgets SET is_deleted = TRUE WHERE id = $1', [id]);
+        if (result.rowCount === 0) return res.status(404).json({ message: 'Orçamento não encontrado' });
         res.json({ message: 'Orçamento excluído com sucesso' });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao excluir orçamento' });

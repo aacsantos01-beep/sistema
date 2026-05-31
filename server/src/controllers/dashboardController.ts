@@ -3,23 +3,24 @@ import { db } from '../db/database';
 
 export const getStats = async (req: any, res: Response) => {
     try {
-        const totalSalesRes = await db.query('SELECT SUM(total_amount) as total FROM sales');
+        const totalSalesRes = await db.query('SELECT SUM(total_amount) as total FROM sales WHERE is_deleted = FALSE');
         const totalProductsRes = await db.query('SELECT COUNT(*) as count FROM products');
         const lowStockRes = await db.query('SELECT COUNT(*) as count FROM products WHERE stock < 10');
         
-        const totalPendingRes = await db.query("SELECT SUM(amount) as total FROM payables WHERE status = 'pending'");
-        const totalPaidRes = await db.query("SELECT SUM(amount) as total FROM payables WHERE status = 'paid'");
+        const totalPendingRes = await db.query("SELECT SUM(amount) as total FROM payables WHERE status = 'pending' AND is_deleted = FALSE");
+        const totalPaidRes = await db.query("SELECT SUM(amount) as total FROM payables WHERE status = 'paid' AND is_deleted = FALSE");
 
         // Monthly Stats (Current Month)
         const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-        const monthlyRevenueRes = await db.query("SELECT SUM(total_amount) as total FROM sales WHERE TO_CHAR(created_at, 'YYYY-MM') = $1", [currentMonth]);
-        const monthlyExpensesRes = await db.query("SELECT SUM(amount) as total FROM payables WHERE status = 'paid' AND TO_CHAR(due_date, 'YYYY-MM') = $1", [currentMonth]);
+        const monthlyRevenueRes = await db.query("SELECT SUM(total_amount) as total FROM sales WHERE TO_CHAR(created_at, 'YYYY-MM') = $1 AND is_deleted = FALSE", [currentMonth]);
+        const monthlyExpensesRes = await db.query("SELECT SUM(amount) as total FROM payables WHERE status = 'paid' AND TO_CHAR(due_date, 'YYYY-MM') = $1 AND is_deleted = FALSE", [currentMonth]);
 
         const recentSalesRes = await db.query(`
             SELECT s.*, u.username, sl.name as seller_name
             FROM sales s 
             LEFT JOIN users u ON s.user_id = u.id 
             LEFT JOIN sellers sl ON s.seller_id = sl.id
+            WHERE s.is_deleted = FALSE
             ORDER BY s.id DESC 
             LIMIT 5
         `);
@@ -49,14 +50,14 @@ export const getMonthlyReport = async (req: any, res: Response) => {
             SELECT s.id, s.total_amount, s.created_at, sl.name as seller_name, s.payment_method
             FROM sales s
             LEFT JOIN sellers sl ON s.seller_id = sl.id
-            WHERE TO_CHAR(s.created_at, 'YYYY-MM') = $1
+            WHERE TO_CHAR(s.created_at, 'YYYY-MM') = $1 AND s.is_deleted = FALSE
             ORDER BY s.created_at ASC
         `, [targetMonth]);
 
         const payablesRes = await db.query(`
             SELECT id, description, amount, due_date, status, category, payment_method
             FROM payables
-            WHERE TO_CHAR(due_date, 'YYYY-MM') = $1 AND status = 'paid'
+            WHERE TO_CHAR(due_date, 'YYYY-MM') = $1 AND status = 'paid' AND is_deleted = FALSE
             ORDER BY due_date ASC
         `, [targetMonth]);
 

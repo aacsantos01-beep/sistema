@@ -42,6 +42,11 @@ const Login: React.FC = () => {
     <div className="login-page">
       <div className="login-card">
         <div className="login-header">
+          <img 
+            src="https://breezy-violet-eierwzf7.edgeone.app/logo-1776994454972-249486477.jpeg" 
+            alt="Logo" 
+            className="login-logo" 
+          />
           <h1>IR Assistência Técnica</h1>
           <p>Gerenciamento de Loja</p>
         </div>
