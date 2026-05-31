@@ -205,7 +205,7 @@ const NewSale: React.FC = () => {
         </head>
         <body>
           <div class="header">
-            ${companyLogo ? `<img src="${BASE_URL}${companyLogo}" alt="Logo" />` : ''}
+            ${companyLogo ? `<img src="${companyLogo.startsWith('http') ? companyLogo : `${BASE_URL}${companyLogo}`}" alt="Logo" />` : ''}
             <h2>${companyName}</h2>
           </div>
           <div class="info">

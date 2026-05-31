@@ -96,7 +96,7 @@ const Settings: React.FC = () => {
               <div className="logo-upload-container">
                 <div className="logo-preview">
                   {logo ? (
-                    <img src={logo.startsWith('blob') ? logo : `${BASE_URL}${logo}`} alt="Logo preview" />
+                    <img src={logo.startsWith('blob') ? logo : (logo.startsWith('http') ? logo : `${BASE_URL}${logo}`)} alt="Logo preview" />
                   ) : (
                     <div className="no-logo">Sem Logo</div>
                   )}
