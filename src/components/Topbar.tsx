@@ -1,15 +1,20 @@
 import React, { useRef } from 'react';
-import { User, Camera } from 'lucide-react';
+import { User, Camera, Menu, Monitor, Smartphone, Tablet } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
+import { getDeviceInfo } from '../utils/device';
 import './Topbar.css';
 
 interface TopbarProps {
   title?: string;
+  onMenuClick?: () => void;
+  isMobile?: boolean;
 }
 
-const Topbar: React.FC<TopbarProps> = ({ title = 'Sistema' }) => {
+const Topbar: React.FC<TopbarProps> = ({ title = 'Sistema', onMenuClick, isMobile }) => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const deviceInfo = getDeviceInfo();
+
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -44,12 +49,32 @@ const Topbar: React.FC<TopbarProps> = ({ title = 'Sistema' }) => {
     }
   };
 
+  const renderDeviceIcon = () => {
+    switch (deviceInfo.type) {
+      case 'mobile':
+        return <Smartphone size={16} className="device-icon" />;
+      case 'tablet':
+        return <Tablet size={16} className="device-icon" />;
+      default:
+        return <Monitor size={16} className="device-icon" />;
+    }
+  };
+
   return (
     <header className="topbar">
-      <div className="topbar-left">
+      <div className="topbar-left" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {isMobile && (
+          <button onClick={onMenuClick} className="menu-toggle-btn" aria-label="Abrir menu">
+            <Menu size={24} />
+          </button>
+        )}
         <h2>{title}</h2>
       </div>
       <div className="topbar-right">
+        <div className="device-badge" title={`Navegador: ${deviceInfo.browser} | OS: ${deviceInfo.os}`} style={{ marginRight: '1rem' }}>
+          {renderDeviceIcon()}
+          <span>{deviceInfo.name}</span>
+        </div>
         <div className="user-profile">
           <div className="user-info">
             <span className="username">{user.username || 'Admin'}</span>

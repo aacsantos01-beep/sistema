@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, History, LogOut, Users, UserCog, FileText, CreditCard, Settings as SettingsIcon, Trash2 } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, History, LogOut, Users, UserCog, FileText, CreditCard, Settings as SettingsIcon, Trash2, X } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import './Sidebar.css';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  isMobile?: boolean;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile }) => {
   const [companyName, setCompanyName] = useState('IR Assistência Técnica');
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
   const userStr = localStorage.getItem('user');
@@ -34,9 +40,15 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${isMobile && isOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-header">
+        {isMobile && (
+          <button onClick={onClose} className="sidebar-close-btn" aria-label="Fechar menu">
+            <X size={24} />
+          </button>
+        )}
         <Link to="/" className="sidebar-brand-link">
+
           {companyLogo && (
             <img 
               src={companyLogo.startsWith('http') ? companyLogo : `${BASE_URL}${companyLogo}`} 

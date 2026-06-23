@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
@@ -8,12 +8,34 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, title }) => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
-    <div className="app-container" style={{ display: 'flex', height: '100vh', width: '100vw', backgroundColor: '#f8fafc', overflow: 'hidden' }}>
-      <Sidebar />
-      <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <Topbar title={title} />
-        <main style={{ padding: '2rem', flex: 1, overflowY: 'auto', backgroundColor: '#f8fafc' }}>
+    <div className={`app-container ${isSidebarOpen ? 'sidebar-open' : ''} ${isMobile ? 'is-mobile' : ''}`}>
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} isMobile={isMobile} />
+      {isSidebarOpen && isMobile && (
+        <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
+      )}
+      <div className="main-content">
+        <Topbar title={title} onMenuClick={toggleSidebar} isMobile={isMobile} />
+        <main className="content-area">
           {children}
         </main>
       </div>
