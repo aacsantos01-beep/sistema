@@ -20,7 +20,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+// Increase body size limits to support image uploads (e.g. user profile photos)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Serve static uploads
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -64,6 +66,21 @@ app.use('/api/trash', trashRoutes);
 // Basic route
 app.get('/', (req, res) => {
     res.send('IR Assistência Técnica API is running');
+});
+
+// Global error handler — translates multer errors (e.g. file too large)
+// into 400 responses with a clear message instead of generic 500s.
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (err && err.name === 'MulterError') {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(413).json({ message: 'Arquivo muito grande. Tamanho máximo: 5MB.' });
+        }
+        return res.status(400).json({ message: err.message || 'Erro no upload do arquivo' });
+    }
+    if (err && err.message) {
+        return res.status(400).json({ message: err.message });
+    }
+    return next(err);
 });
 
 // Start server - ONLY locally

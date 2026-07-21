@@ -21,7 +21,17 @@ const storage = multer.diskStorage({
     }
 });
 
-export const upload = multer({ storage });
+export const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req: Request, file: Express.Multer.File, cb: any) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Apenas imagens são permitidas'));
+        }
+    }
+});
 
 export const getAllUsers = async (req: Request, res: Response) => {
     try {
