@@ -62,6 +62,13 @@ const UserList: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleUploaderClick = (e: React.MouseEvent) => {
+    // Prevent the click from bubbling up and submitting the form
+    e.preventDefault();
+    e.stopPropagation();
+    fileInputRef.current?.click();
+  };
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -95,11 +102,17 @@ const UserList: React.FC = () => {
         handleCloseModal();
         fetchUsers();
       } else {
-        const resData = await response.json();
-        alert(resData.message);
+        let resData: any = {};
+        try {
+          resData = await response.json();
+        } catch {
+          resData = { message: `Erro ${response.status}: ${response.statusText}` };
+        }
+        alert(resData.message || `Erro ao salvar (${response.status})`);
       }
     } catch (error) {
       console.error('Error saving user:', error);
+      alert('Erro de conexão ao salvar usuário.');
     }
   };
 
@@ -201,7 +214,7 @@ const UserList: React.FC = () => {
                 <label style={{ alignSelf: 'flex-start' }}>Foto do Usuário</label>
                 <div
                   className="user-photo-uploader"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={handleUploaderClick}
                   title="Selecionar foto"
                 >
                   {photoPreview ? (
@@ -221,6 +234,7 @@ const UserList: React.FC = () => {
                   type="file"
                   accept="image/*"
                   onChange={handlePhotoChange}
+                  onClick={(e) => e.stopPropagation()}
                   hidden
                 />
                 <p className="help-text" style={{ margin: 0 }}>PNG ou JPG, recomendado 300x300px</p>
