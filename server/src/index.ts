@@ -3,6 +3,7 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import { initDb, db } from './db/database';
 import authRoutes from './routes/authRoutes';
 import productRoutes from './routes/productRoutes';
@@ -20,6 +21,10 @@ const PORT = process.env.PORT || 5000;
 
 // Trust the first proxy hop (Vercel) so req.ip / rate limiting see the real client IP
 app.set('trust proxy', 1);
+
+// Standard security headers (X-Content-Type-Options, X-Frame-Options, HSTS, etc.)
+// CSP disabled: this API serves JSON + uploaded images, not HTML pages that need it.
+app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
     .split(',')
@@ -59,7 +64,8 @@ app.get('/api/health', async (req, res) => {
         const result = await db.query('SELECT NOW()');
         res.json({ status: 'ok', database: 'connected', time: result.rows[0].now });
     } catch (error: any) {
-        res.status(500).json({ status: 'error', database: 'disconnected', error: error.message });
+        console.error('Health check failed:', error);
+        res.status(500).json({ status: 'error', database: 'disconnected' });
     }
 });
 

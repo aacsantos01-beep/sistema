@@ -27,7 +27,8 @@ export const createBudget = async (req: any, res: Response) => {
         res.status(201).json({ id: budgetId, message: 'Orçamento criado com sucesso!' });
     } catch (error: any) {
         await client.query('ROLLBACK');
-        res.status(500).json({ message: 'Erro ao criar orçamento: ' + error.message });
+        console.error('Erro ao criar orçamento:', error);
+        res.status(500).json({ message: 'Erro ao criar orçamento' });
     } finally {
         client.release();
     }

@@ -1,6 +1,7 @@
 import { Pool, types } from 'pg';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 // Force numeric types to be parsed as numbers instead of strings
 types.setTypeParser(1700, (val) => parseFloat(val)); // NUMERIC/DECIMAL
@@ -131,12 +132,19 @@ const initDb = async () => {
             );
         `);
 
-        // Create default admin user if not exists
+        // Create default admin user if not exists. Never seed a predictable password —
+        // use ADMIN_DEFAULT_PASSWORD if provided, otherwise generate a random one and
+        // print it once so the operator can log in and change it immediately.
         const adminRes = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
         if (adminRes.rows.length === 0) {
-            const hashedPassword = bcrypt.hashSync('admin123', 10);
+            const initialPassword = process.env.ADMIN_DEFAULT_PASSWORD || crypto.randomBytes(12).toString('base64url');
+            const hashedPassword = bcrypt.hashSync(initialPassword, 10);
             await client.query('INSERT INTO users (username, password, role) VALUES ($1, $2, $3)', ['admin', hashedPassword, 'admin']);
-            console.log('Default admin user created.');
+            if (!process.env.ADMIN_DEFAULT_PASSWORD) {
+                console.log(`Default admin user created. Generated password (change it immediately): ${initialPassword}`);
+            } else {
+                console.log('Default admin user created using ADMIN_DEFAULT_PASSWORD.');
+            }
         }
 
         await client.query('COMMIT');

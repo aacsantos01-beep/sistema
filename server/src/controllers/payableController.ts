@@ -32,7 +32,8 @@ export const createPayable = async (req: Request, res: Response) => {
         );
         res.status(201).json({ id: result.rows[0].id, description, amount, due_date, status, category, payment_method });
     } catch (error: any) {
-        res.status(500).json({ message: 'Error creating payable: ' + error.message });
+        console.error('Error creating payable:', error);
+        res.status(500).json({ message: 'Error creating payable' });
     }
 };
 
@@ -48,7 +49,8 @@ export const updatePayable = async (req: Request, res: Response) => {
         if (result.rowCount === 0) return res.status(404).json({ message: 'Payable not found' });
         res.json({ id, description, amount, due_date, status, category, payment_method });
     } catch (error: any) {
-        res.status(500).json({ message: 'Error updating payable: ' + error.message });
+        console.error('Error updating payable:', error);
+        res.status(500).json({ message: 'Error updating payable' });
     }
 };
 
@@ -63,7 +65,8 @@ export const updatePayableStatus = async (req: Request, res: Response) => {
         if (result.rowCount === 0) return res.status(404).json({ message: 'Payable not found' });
         res.json({ message: 'Status updated' });
     } catch (error: any) {
-        res.status(500).json({ message: 'Error updating payable status: ' + error.message });
+        console.error('Error updating payable status:', error);
+        res.status(500).json({ message: 'Error updating payable status' });
     }
 };
 
@@ -74,6 +77,7 @@ export const deletePayable = async (req: Request, res: Response) => {
         if (result.rowCount === 0) return res.status(404).json({ message: 'Payable not found' });
         res.json({ message: 'Payable deleted' });
     } catch (error: any) {
-        res.status(500).json({ message: 'Error deleting payable: ' + error.message });
+        console.error('Error deleting payable:', error);
+        res.status(500).json({ message: 'Error deleting payable' });
     }
 };

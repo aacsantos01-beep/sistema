@@ -31,6 +31,13 @@ export const createUser = async (req: Request, res: Response) => {
     const { username, password, role } = req.body;
     const file = req.file as Express.Multer.File | undefined;
 
+    if (!username || typeof username !== 'string' || username.trim().length < 3) {
+        return res.status(400).json({ message: 'Usuário deve ter pelo menos 3 caracteres' });
+    }
+    if (!password || typeof password !== 'string' || password.length < 6) {
+        return res.status(400).json({ message: 'Senha deve ter pelo menos 6 caracteres' });
+    }
+
     try {
         let image_url: string | null = null;
         if (file) {
@@ -58,6 +65,13 @@ export const updateUser = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { username, role, password } = req.body;
     const file = req.file as Express.Multer.File | undefined;
+
+    if (!username || typeof username !== 'string' || username.trim().length < 3) {
+        return res.status(400).json({ message: 'Usuário deve ter pelo menos 3 caracteres' });
+    }
+    if (password && (typeof password !== 'string' || password.length < 6)) {
+        return res.status(400).json({ message: 'Senha deve ter pelo menos 6 caracteres' });
+    }
 
     try {
         const existingResult = await db.query('SELECT image_url FROM users WHERE id = $1', [id]);
