@@ -82,7 +82,7 @@ const Topbar: React.FC<TopbarProps> = ({ title = 'Sistema', onMenuClick, isMobil
           </div>
           <div className="avatar profile-avatar" onClick={handleAvatarClick} title="Alterar foto de perfil">
             {user.image_url ? (
-              <img src={`${BASE_URL}${user.image_url}`} alt={user.username} className="user-photo" />
+              <img src={user.image_url.startsWith('http') ? user.image_url : `${BASE_URL}${user.image_url}`} alt={user.username} className="user-photo" />
             ) : (
               <User size={20} />
             )}

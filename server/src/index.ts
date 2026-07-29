@@ -3,7 +3,6 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
 import { initDb, db } from './db/database';
 import authRoutes from './routes/authRoutes';
 import productRoutes from './routes/productRoutes';
@@ -19,13 +18,26 @@ import trashRoutes from './routes/trashRoutes';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// Trust the first proxy hop (Vercel) so req.ip / rate limiting see the real client IP
+app.set('trust proxy', 1);
+
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim());
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (e.g. server-to-server, curl, health checks)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+}));
 // Increase body size limits to support image uploads (e.g. user profile photos)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-
-// Serve static uploads
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Middleware to ensure DB is initialized
 let dbInitialized = false;

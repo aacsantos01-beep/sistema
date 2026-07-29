@@ -1,11 +1,13 @@
 import * as express from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED_ROTATED_JWT_SECRET';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error('CRITICAL: JWT_SECRET environment variable is not set.');
+}
 
 export const authenticateToken = (req: any, res: express.Response, next: express.NextFunction) => {
     const authHeader = req.headers.authorization;
-    console.log('Auth Header:', authHeader);
 
     if (!authHeader) {
         return res.status(401).json({ message: 'Nenhum token fornecido' });

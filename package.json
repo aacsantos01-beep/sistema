@@ -3,15 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "axios": "^1.15.0",
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^1.8.0",
-    "multer": "^2.1.1",
-    "pg": "^8.11.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.22.3",
@@ -20,18 +12,13 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@types/node": "^20.0.0",
-    "@types/pg": "^8.10.9",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.5",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/multer": "^1.4.11",
+    "cross-env": "^7.0.3",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build-server": "cd server && npm install && npm run build",
-    "build": "npm run build-server && CI=false react-scripts build"
+    "build": "npm run build-server && cross-env CI=false react-scripts build"
   },
   "eslintConfig": {
     "extends": [

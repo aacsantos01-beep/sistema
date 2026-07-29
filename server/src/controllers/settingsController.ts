@@ -1,26 +1,21 @@
 import { Request, Response } from 'express';
 import { db } from '../db/database';
-import fs from 'fs';
-import path from 'path';
 import multer from 'multer';
+import { uploadFile, deleteFile, generateFilename } from '../services/storageService';
 
-// Configure multer for system/logo
-const uploadDir = path.join(process.cwd(), 'uploads/system');
-if (!process.env.VERCEL && !fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: (req: Request, file: Express.Multer.File, cb: any) => {
-        cb(null, uploadDir);
-    },
-    filename: (req: Request, file: Express.Multer.File, cb: any) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
+// Files are received in memory and streamed to Supabase Storage — no local disk writes,
+// which is required for serverless (Vercel) where the filesystem is ephemeral/read-only.
+export const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req: Request, file: Express.Multer.File, cb: any) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Apenas imagens são permitidas'));
+        }
     }
 });
-
-export const upload = multer({ storage });
 
 export const getSettings = async (req: Request, res: Response) => {
     try {
@@ -37,26 +32,20 @@ export const getSettings = async (req: Request, res: Response) => {
 
 export const updateLogo = async (req: Request, res: Response) => {
     try {
-        const file = req.file as Express.Multer.File;
+        const file = req.file as Express.Multer.File | undefined;
         if (!file) {
             return res.status(400).json({ message: 'No file uploaded' });
         }
 
-        const logoUrl = `/uploads/system/${file.filename}`;
-        
-        // Check if logo setting exists
+        const filename = generateFilename('logo-', file.originalname);
+        const logoUrl = await uploadFile('system', filename, file.buffer, file.mimetype);
+
         const result = await db.query('SELECT * FROM settings WHERE key = $1', ['company_logo']);
         const existing = result.rows[0];
-        
+
         if (existing) {
-            // Delete old logo file if exists
-            const oldPath = path.join(process.cwd(), existing.value);
-            if (fs.existsSync(oldPath)) {
-                try {
-                    fs.unlinkSync(oldPath);
-                } catch (e) {
-                    console.error('Error deleting old logo:', e);
-                }
+            if (existing.value) {
+                deleteFile(existing.value).catch(() => {});
             }
             await db.query('UPDATE settings SET value = $1 WHERE key = $2', [logoUrl, 'company_logo']);
         } else {

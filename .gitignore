@@ -1,1 +1,13 @@
 node_modules
+.env
+.env.local
+.env.*.local
+server/.env
+server/dist
+build
+uploads/
+server/uploads/
+*.log
+*_output.txt
+*_output_*.txt
+.DS_Store

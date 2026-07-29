@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { Plus, Search, FileText, Trash2, ShoppingCart, CheckCircle, Clock, ShieldCheck, X, Printer } from 'lucide-react';
+import { Plus, Search, Trash2, ShoppingCart, X, Printer } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 import './SaleList.css';

@@ -275,7 +275,7 @@ const NewSale: React.FC = () => {
               <div key={product.id} className="product-card card" onClick={() => addToCart(product)}>
                 <div className="product-card-image">
                   {product.image_url ? (
-                    <img src={`${BASE_URL}${product.image_url}`} alt={product.name} />
+                    <img src={product.image_url.startsWith('http') ? product.image_url : `${BASE_URL}${product.image_url}`} alt={product.name} />
                   ) : (
                     <div className="pos-image-placeholder">
                       <ImageIcon size={32} />
