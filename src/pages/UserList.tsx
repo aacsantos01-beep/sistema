@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/Layout';
 import { UserPlus, Edit2, Trash2, Shield, User, Camera, Upload } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
+import { compressImage } from '../utils/imageCompress';
 import './SellerList.css'; // Reusing seller list styles for consistency
 
 const UserList: React.FC = () => {
@@ -69,11 +70,12 @@ const UserList: React.FC = () => {
     fileInputRef.current?.click();
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setPhotoFile(file);
       setPhotoPreview(URL.createObjectURL(file));
+      const compressed = await compressImage(file);
+      setPhotoFile(compressed);
     }
   };
 

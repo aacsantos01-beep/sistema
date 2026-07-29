@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { User, Camera, Menu, Monitor, Smartphone, Tablet } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import { getDeviceInfo } from '../utils/device';
+import { compressImage } from '../utils/imageCompress';
 import './Topbar.css';
 
 interface TopbarProps {
@@ -24,8 +25,9 @@ const Topbar: React.FC<TopbarProps> = ({ title = 'Sistema', onMenuClick, isMobil
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const compressed = await compressImage(file);
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('photo', compressed);
 
     try {
       const response = await fetch(`${API_URL}/users/profile/photo`, {
@@ -43,9 +45,13 @@ const Topbar: React.FC<TopbarProps> = ({ title = 'Sistema', onMenuClick, isMobil
         localStorage.setItem('user', JSON.stringify(updatedUser));
         // Refresh page to show new image
         window.location.reload();
+      } else {
+        const data = await response.json().catch(() => ({}));
+        alert(data.message || 'Erro ao enviar foto de perfil');
       }
     } catch (error) {
       console.error('Error uploading profile photo:', error);
+      alert('Erro ao enviar foto de perfil');
     }
   };
 

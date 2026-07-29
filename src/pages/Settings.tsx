@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { Upload, Save, Building, Image as ImageIcon, CheckCircle } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
+import { compressImage } from '../utils/imageCompress';
 import './Settings.css';
 
 const Settings: React.FC = () => {
@@ -28,10 +29,12 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setLogo(URL.createObjectURL(e.target.files[0]));
+      const selected = e.target.files[0];
+      setLogo(URL.createObjectURL(selected));
+      const compressed = await compressImage(selected);
+      setFile(compressed);
     }
   };
 
@@ -57,17 +60,21 @@ const Settings: React.FC = () => {
       if (file) {
         const formData = new FormData();
         formData.append('logo', file);
-        await fetch(`${API_URL}/settings/logo`, {
+        const logoResponse = await fetch(`${API_URL}/settings/logo`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` },
           body: formData
         });
+        if (!logoResponse.ok) {
+          const data = await logoResponse.json().catch(() => ({}));
+          throw new Error(data.message || 'Erro ao enviar logo');
+        }
       }
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    } catch (error) {
-      alert('Erro ao salvar configurações');
+    } catch (error: any) {
+      alert(error.message || 'Erro ao salvar configurações');
     } finally {
       setLoading(false);
     }
