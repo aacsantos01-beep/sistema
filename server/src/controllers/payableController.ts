@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { db } from '../db/database';
+import { logActivity } from '../services/activityLogService';
 
 export const getAllPayables = async (req: Request, res: Response) => {
     try {
@@ -22,14 +23,17 @@ export const getPayableById = async (req: Request, res: Response) => {
     }
 };
 
-export const createPayable = async (req: Request, res: Response) => {
+export const createPayable = async (req: any, res: Response) => {
     const { description, amount, due_date, status, category, payment_method } = req.body;
-    
+
     try {
         const result = await db.query(
             'INSERT INTO payables (description, amount, due_date, status, category, payment_method) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
             [description, amount, due_date, status || 'pending', category, payment_method]
         );
+
+        logActivity(req.user?.id, req.user?.username, 'create_payable', 'payable', result.rows[0].id, `Criou a conta a pagar "${description}" (R$ ${Number(amount).toFixed(2)})`);
+
         res.status(201).json({ id: result.rows[0].id, description, amount, due_date, status, category, payment_method });
     } catch (error: any) {
         console.error('Error creating payable:', error);
@@ -37,7 +41,7 @@ export const createPayable = async (req: Request, res: Response) => {
     }
 };
 
-export const updatePayable = async (req: Request, res: Response) => {
+export const updatePayable = async (req: any, res: Response) => {
     const { id } = req.params;
     const { description, amount, due_date, status, category, payment_method } = req.body;
 
@@ -47,6 +51,9 @@ export const updatePayable = async (req: Request, res: Response) => {
             [description, amount, due_date, status, category, payment_method, id]
         );
         if (result.rowCount === 0) return res.status(404).json({ message: 'Payable not found' });
+
+        logActivity(req.user?.id, req.user?.username, 'update_payable', 'payable', id, `Atualizou a conta a pagar "${description}"`);
+
         res.json({ id, description, amount, due_date, status, category, payment_method });
     } catch (error: any) {
         console.error('Error updating payable:', error);
@@ -54,7 +61,7 @@ export const updatePayable = async (req: Request, res: Response) => {
     }
 };
 
-export const updatePayableStatus = async (req: Request, res: Response) => {
+export const updatePayableStatus = async (req: any, res: Response) => {
     const { id } = req.params;
     const { status } = req.body;
     try {
@@ -63,6 +70,9 @@ export const updatePayableStatus = async (req: Request, res: Response) => {
             [status, id]
         );
         if (result.rowCount === 0) return res.status(404).json({ message: 'Payable not found' });
+
+        logActivity(req.user?.id, req.user?.username, 'update_payable_status', 'payable', id, `Alterou status para "${status}"`);
+
         res.json({ message: 'Status updated' });
     } catch (error: any) {
         console.error('Error updating payable status:', error);
@@ -70,11 +80,14 @@ export const updatePayableStatus = async (req: Request, res: Response) => {
     }
 };
 
-export const deletePayable = async (req: Request, res: Response) => {
+export const deletePayable = async (req: any, res: Response) => {
     const { id } = req.params;
     try {
         const result = await db.query('UPDATE payables SET is_deleted = TRUE WHERE id = $1', [id]);
         if (result.rowCount === 0) return res.status(404).json({ message: 'Payable not found' });
+
+        logActivity(req.user?.id, req.user?.username, 'delete_payable', 'payable', id);
+
         res.json({ message: 'Payable deleted' });
     } catch (error: any) {
         console.error('Error deleting payable:', error);

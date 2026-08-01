@@ -15,6 +15,7 @@ import userRoutes from './routes/userRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 import payableRoutes from './routes/payableRoutes';
 import trashRoutes from './routes/trashRoutes';
+import activityLogRoutes from './routes/activityLogRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -80,6 +81,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/payables', payableRoutes);
 app.use('/api/trash', trashRoutes);
+app.use('/api/activity-logs', activityLogRoutes);
 
 // Basic route
 app.get('/', (req, res) => {

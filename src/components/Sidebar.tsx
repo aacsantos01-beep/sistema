@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, History, LogOut, Users, UserCog, FileText, CreditCard, Settings as SettingsIcon, Trash2, X } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, History, LogOut, Users, UserCog, FileText, CreditCard, Settings as SettingsIcon, Trash2, Activity, X } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import './Sidebar.css';
 
@@ -121,6 +121,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isMobile }) => {
           <NavLink to="/trash" className={({ isActive }) => isActive ? 'active' : ''}>
             <Trash2 size={20} />
             <span>Lixeira</span>
+          </NavLink>
+        )}
+
+        {isAdmin && (
+          <NavLink to="/activity-logs" className={({ isActive }) => isActive ? 'active' : ''}>
+            <Activity size={20} />
+            <span>Log de Atividades</span>
           </NavLink>
         )}
       </nav>

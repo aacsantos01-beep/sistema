@@ -2,6 +2,7 @@ import * as express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { db } from '../db/database';
+import { logActivity } from '../services/activityLogService';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -32,6 +33,8 @@ export const login = async (req: express.Request, res: express.Response) => {
             JWT_SECRET,
             { expiresIn: '8h' }
         );
+
+        logActivity(user.id, user.username, 'login', 'auth', user.id);
 
         res.json({
             token,

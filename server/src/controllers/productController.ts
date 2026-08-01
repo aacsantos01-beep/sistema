@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { db } from '../db/database';
 import multer from 'multer';
 import { uploadFile, deleteFile, generateFilename } from '../services/storageService';
+import { logActivity } from '../services/activityLogService';
 
 // Files are received in memory and streamed to Supabase Storage — no local disk writes,
 // which is required for serverless (Vercel) where the filesystem is ephemeral/read-only.
@@ -38,7 +39,7 @@ export const getProductById = async (req: Request, res: Response) => {
     }
 };
 
-export const createProduct = async (req: Request, res: Response) => {
+export const createProduct = async (req: any, res: Response) => {
     const { sku, name, category, supplier, price, stock } = req.body;
     const file = req.file as Express.Multer.File | undefined;
 
@@ -53,6 +54,8 @@ export const createProduct = async (req: Request, res: Response) => {
             'INSERT INTO products (sku, name, category, supplier, price, stock, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
             [sku, name, category, supplier, price, stock, image_url]
         );
+        logActivity(req.user?.id, req.user?.username, 'create_product', 'product', result.rows[0].id, `Criou o produto "${name}" (SKU ${sku})`);
+
         res.status(201).json({ id: result.rows[0].id, sku, name, category, supplier, price, stock, image_url });
     } catch (error: any) {
         if (error.code === '23505') { // Postgres unique constraint violation
@@ -63,7 +66,7 @@ export const createProduct = async (req: Request, res: Response) => {
     }
 };
 
-export const updateProduct = async (req: Request, res: Response) => {
+export const updateProduct = async (req: any, res: Response) => {
     const { id } = req.params;
     const { sku, name, category, supplier, price, stock } = req.body;
     const file = req.file as Express.Multer.File | undefined;
@@ -87,6 +90,9 @@ export const updateProduct = async (req: Request, res: Response) => {
             [sku, name, category, supplier, price, stock, image_url, id]
         );
         if (result.rowCount === 0) return res.status(404).json({ message: 'Product not found' });
+
+        logActivity(req.user?.id, req.user?.username, 'update_product', 'product', id, `Atualizou o produto "${name}" (SKU ${sku})`);
+
         res.json({ id, sku, name, category, supplier, price, stock, image_url });
     } catch (error: any) {
         console.error('Error updating product:', error);
@@ -94,7 +100,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     }
 };
 
-export const adjustStock = async (req: Request, res: Response) => {
+export const adjustStock = async (req: any, res: Response) => {
     const { id } = req.params;
     const { amount } = req.body; // positive for add, negative for remove
     try {
@@ -112,6 +118,9 @@ export const adjustStock = async (req: Request, res: Response) => {
         );
 
         const updateResult = await db.query('SELECT * FROM products WHERE id = $1', [id]);
+
+        logActivity(req.user?.id, req.user?.username, 'adjust_stock', 'product', id, `Ajustou o estoque do produto "${product.name}" em ${amount > 0 ? '+' : ''}${amount}`);
+
         res.json(updateResult.rows[0]);
     } catch (error: any) {
         console.error('Error adjusting stock:', error);
@@ -119,7 +128,7 @@ export const adjustStock = async (req: Request, res: Response) => {
     }
 };
 
-export const deleteProduct = async (req: Request, res: Response) => {
+export const deleteProduct = async (req: any, res: Response) => {
     const { id } = req.params;
     try {
         const result = await db.query('SELECT image_url FROM products WHERE id = $1', [id]);
@@ -131,6 +140,8 @@ export const deleteProduct = async (req: Request, res: Response) => {
         if (product && product.image_url) {
             deleteFile(product.image_url).catch(() => {});
         }
+
+        logActivity(req.user?.id, req.user?.username, 'delete_product', 'product', id);
 
         res.json({ message: 'Product deleted' });
     } catch (error: any) {

@@ -12,6 +12,7 @@ import UserList from './pages/UserList';
 import Settings from './pages/Settings';
 import PayableList from './pages/PayableList';
 import Trash from './pages/Trash';
+import ActivityLogs from './pages/ActivityLogs';
 import './App.css';
 
 // Protected Route Component
@@ -84,13 +85,21 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/trash" 
+        <Route
+          path="/trash"
           element={
             <ProtectedRoute adminOnly>
               <Trash />
             </ProtectedRoute>
-          } 
+          }
+        />
+        <Route
+          path="/activity-logs"
+          element={
+            <ProtectedRoute adminOnly>
+              <ActivityLogs />
+            </ProtectedRoute>
+          }
         />
         <Route 
           path="/products/new" 

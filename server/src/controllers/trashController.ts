@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { db } from '../db/database';
+import { logActivity } from '../services/activityLogService';
 
 export const getTrashItems = async (req: any, res: Response) => {
     try {
@@ -77,6 +78,8 @@ export const restoreItem = async (req: any, res: Response) => {
             await db.query(`UPDATE ${table} SET is_deleted = FALSE WHERE id = $1`, [id]);
         }
 
+        logActivity(req.user?.id, req.user?.username, 'restore_item', type, id);
+
         res.json({ message: 'Item restaurado com sucesso!' });
     } catch (error) {
         res.status(500).json({ message: 'Error restoring item' });
@@ -117,6 +120,8 @@ export const permanentlyDeleteItem = async (req: any, res: Response) => {
         } else {
             return res.status(400).json({ message: 'Invalid item type' });
         }
+
+        logActivity(req.user?.id, req.user?.username, 'permanently_delete_item', type, id);
 
         res.json({ message: 'Item excluído permanentemente!' });
     } catch (error) {

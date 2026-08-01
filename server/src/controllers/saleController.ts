@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { db } from '../db/database';
 import { sendTelegramNotification, escapeHtml } from '../services/telegramService';
+import { logActivity } from '../services/activityLogService';
 
 export const getAllSales = async (req: any, res: Response) => {
     try {
@@ -46,6 +47,9 @@ export const deleteSale = async (req: any, res: Response) => {
         }
 
         await client.query('COMMIT');
+
+        logActivity(req.user?.id, req.user?.username, 'delete_sale', 'sale', id);
+
         res.json({ message: 'Venda excluída com sucesso e estoque restaurado!' });
     } catch (error: any) {
         await client.query('ROLLBACK');
@@ -128,6 +132,8 @@ export const createSale = async (req: any, res: Response) => {
 
         // Send notification (async)
         sendTelegramNotification(telegramMsg).catch(err => console.error('Telegram notification error:', err));
+
+        logActivity(req.user?.id, req.user?.username, 'create_sale', 'sale', saleId, `Registrou venda no valor de R$ ${Number(total_amount).toFixed(2)}`);
 
         res.status(201).json({ id: saleId, message: 'Venda realizada com sucesso!' });
     } catch (error: any) {

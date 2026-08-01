@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { db } from '../db/database';
 import multer from 'multer';
 import { uploadFile, deleteFile, generateFilename } from '../services/storageService';
+import { logActivity } from '../services/activityLogService';
 
 // Files are received in memory and streamed to Supabase Storage — no local disk writes,
 // which is required for serverless (Vercel) where the filesystem is ephemeral/read-only.
@@ -30,7 +31,7 @@ export const getSettings = async (req: Request, res: Response) => {
     }
 };
 
-export const updateLogo = async (req: Request, res: Response) => {
+export const updateLogo = async (req: any, res: Response) => {
     try {
         const file = req.file as Express.Multer.File | undefined;
         if (!file) {
@@ -52,6 +53,8 @@ export const updateLogo = async (req: Request, res: Response) => {
             await db.query('INSERT INTO settings (key, value) VALUES ($1, $2)', ['company_logo', logoUrl]);
         }
 
+        logActivity(req.user?.id, req.user?.username, 'update_logo', 'settings', 'company_logo');
+
         res.json({ logoUrl, message: 'Logo updated successfully' });
     } catch (error) {
         console.error('Error updating logo:', error);
@@ -59,7 +62,7 @@ export const updateLogo = async (req: Request, res: Response) => {
     }
 };
 
-export const updateCompanyName = async (req: Request, res: Response) => {
+export const updateCompanyName = async (req: any, res: Response) => {
     const { name } = req.body;
     try {
         const result = await db.query('SELECT * FROM settings WHERE key = $1', ['company_name']);
@@ -68,6 +71,9 @@ export const updateCompanyName = async (req: Request, res: Response) => {
         } else {
             await db.query('INSERT INTO settings (key, value) VALUES ($1, $2)', ['company_name', name]);
         }
+
+        logActivity(req.user?.id, req.user?.username, 'update_company_name', 'settings', 'company_name', `Alterou o nome da empresa para "${name}"`);
+
         res.json({ message: 'Company name updated successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error updating company name' });

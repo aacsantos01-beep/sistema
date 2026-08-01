@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { db } from '../db/database';
+import { logActivity } from '../services/activityLogService';
 
 export const createBudget = async (req: any, res: Response) => {
     const { customer_name, total_amount, seller_id, items } = req.body;
@@ -24,6 +25,9 @@ export const createBudget = async (req: any, res: Response) => {
         }
 
         await client.query('COMMIT');
+
+        logActivity(user_id, req.user?.username, 'create_budget', 'budget', budgetId, `Criou orçamento para "${customer_name}" no valor de R$ ${Number(total_amount).toFixed(2)}`);
+
         res.status(201).json({ id: budgetId, message: 'Orçamento criado com sucesso!' });
     } catch (error: any) {
         await client.query('ROLLBACK');
@@ -76,6 +80,9 @@ export const deleteBudget = async (req: any, res: Response) => {
     try {
         const result = await db.query('UPDATE budgets SET is_deleted = TRUE WHERE id = $1', [id]);
         if (result.rowCount === 0) return res.status(404).json({ message: 'Orçamento não encontrado' });
+
+        logActivity(req.user?.id, req.user?.username, 'delete_budget', 'budget', id);
+
         res.json({ message: 'Orçamento excluído com sucesso' });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao excluir orçamento' });
@@ -88,6 +95,9 @@ export const updateBudgetStatus = async (req: any, res: Response) => {
     try {
         const result = await db.query('UPDATE budgets SET status = $1 WHERE id = $2', [status, id]);
         if (result.rowCount === 0) return res.status(404).json({ message: 'Orçamento não encontrado' });
+
+        logActivity(req.user?.id, req.user?.username, 'update_budget_status', 'budget', id, `Alterou status para "${status}"`);
+
         res.json({ message: 'Status atualizado com sucesso', status });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao atualizar status' });
