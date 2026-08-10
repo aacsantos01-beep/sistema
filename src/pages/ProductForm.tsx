@@ -11,7 +11,10 @@ const ProductForm: React.FC = () => {
     category: '',
     supplier: '',
     price: 0,
-    stock: 0
+    stock: 0,
+    ncm: '',
+    cfop: '5102',
+    unidade: 'UN'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,7 +39,10 @@ const ProductForm: React.FC = () => {
             category: data.category || '',
             supplier: data.supplier || '',
             price: data.price,
-            stock: data.stock
+            stock: data.stock,
+            ncm: data.ncm || '',
+            cfop: data.cfop || '5102',
+            unidade: data.unidade || 'UN'
           });
         } catch (error) {
           console.error('Error fetching product:', error);
@@ -155,15 +161,48 @@ const ProductForm: React.FC = () => {
             </div>
             <div className="form-group">
               <label>Estoque Inicial</label>
-              <input 
-                type="number" 
-                name="stock" 
-                value={formData.stock} 
-                onChange={handleChange} 
-                required 
+              <input
+                type="number"
+                name="stock"
+                value={formData.stock}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>NCM (fiscal)</label>
+              <input
+                type="text"
+                name="ncm"
+                value={formData.ncm}
+                onChange={handleChange}
+                placeholder="Ex: 84314000"
+              />
+            </div>
+            <div className="form-group">
+              <label>CFOP (fiscal)</label>
+              <input
+                type="text"
+                name="cfop"
+                value={formData.cfop}
+                onChange={handleChange}
+                placeholder="Ex: 5102"
+              />
+            </div>
+            <div className="form-group">
+              <label>Unidade</label>
+              <input
+                type="text"
+                name="unidade"
+                value={formData.unidade}
+                onChange={handleChange}
+                placeholder="Ex: UN, PC, KG"
               />
             </div>
           </div>
+          <p className="help-text" style={{ marginTop: '-1.5rem', marginBottom: '1.5rem' }}>
+            NCM e CFOP são obrigatórios para emitir Nota Fiscal (NFC-e) deste produto. Consulte seu contador se tiver dúvidas.
+          </p>
           <div className="form-actions">
             <button 
               type="button" 

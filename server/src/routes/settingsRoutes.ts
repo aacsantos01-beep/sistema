@@ -7,5 +7,6 @@ const router = Router();
 router.get('/', authenticateToken, settingsController.getSettings);
 router.post('/logo', authenticateToken, isAdmin, settingsController.upload.single('logo'), settingsController.updateLogo);
 router.post('/company-name', authenticateToken, isAdmin, settingsController.updateCompanyName);
+router.post('/fiscal', authenticateToken, isAdmin, settingsController.updateFiscalSettings);
 
 export default router;

@@ -79,3 +79,47 @@ export const updateCompanyName = async (req: any, res: Response) => {
         res.status(500).json({ message: 'Error updating company name' });
     }
 };
+
+// Chaves de configuração usadas para emissão de NFC-e via FocusNFe (ver server/src/services/nfeService.ts).
+const FISCAL_KEYS = [
+    'company_cnpj',
+    'company_ie',
+    'company_razao_social',
+    'company_regime_tributario',
+    'company_address_logradouro',
+    'company_address_numero',
+    'company_address_bairro',
+    'company_address_municipio',
+    'company_address_codigo_municipio',
+    'company_address_uf',
+    'company_address_cep',
+    'focusnfe_token',
+    'focusnfe_ambiente',
+];
+
+export const updateFiscalSettings = async (req: any, res: Response) => {
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
+        for (const key of FISCAL_KEYS) {
+            if (!(key in req.body)) continue;
+            const value = req.body[key] ?? '';
+            const existing = await client.query('SELECT * FROM settings WHERE key = $1', [key]);
+            if (existing.rows.length > 0) {
+                await client.query('UPDATE settings SET value = $1 WHERE key = $2', [value, key]);
+            } else {
+                await client.query('INSERT INTO settings (key, value) VALUES ($1, $2)', [key, value]);
+            }
+        }
+        await client.query('COMMIT');
+
+        logActivity(req.user?.id, req.user?.username, 'update_fiscal_settings', 'settings', 'fiscal', 'Atualizou os dados fiscais da empresa');
+
+        res.json({ message: 'Dados fiscais atualizados com sucesso' });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        res.status(500).json({ message: 'Erro ao atualizar dados fiscais' });
+    } finally {
+        client.release();
+    }
+};

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { db } from '../db/database';
 import { sendTelegramNotification, escapeHtml } from '../services/telegramService';
 import { logActivity } from '../services/activityLogService';
+import { emitNfce, checkNfceStatus } from '../services/nfeService';
 
 export const getAllSales = async (req: any, res: Response) => {
     try {
@@ -29,6 +30,10 @@ export const deleteSale = async (req: any, res: Response) => {
         const saleResult = await client.query('SELECT * FROM sales WHERE id = $1 AND is_deleted = FALSE', [id]);
         if (saleResult.rows.length === 0) {
             throw new Error('Venda não encontrada ou já excluída');
+        }
+
+        if (saleResult.rows[0].nfe_status === 'autorizado') {
+            throw new Error('Esta venda possui uma NFC-e autorizada e não pode ser excluída. Cancele a nota fiscal junto ao contador/provedor antes de excluir.');
         }
 
         // Soft delete the sale
@@ -60,7 +65,7 @@ export const deleteSale = async (req: any, res: Response) => {
 };
 
 export const createSale = async (req: any, res: Response) => {
-    const { items, total_amount, seller_id, payment_method } = req.body;
+    const { items, total_amount, seller_id, payment_method, customer_name, customer_document } = req.body;
     const user_id = req.user.id;
 
     const client = await db.connect();
@@ -69,8 +74,8 @@ export const createSale = async (req: any, res: Response) => {
 
         // Create sale
         const saleResult = await client.query(
-            'INSERT INTO sales (total_amount, user_id, seller_id, payment_method) VALUES ($1, $2, $3, $4) RETURNING id',
-            [total_amount, user_id, seller_id, payment_method]
+            'INSERT INTO sales (total_amount, user_id, seller_id, payment_method, customer_name, customer_document) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            [total_amount, user_id, seller_id, payment_method, customer_name || null, customer_document || null]
         );
         const saleId = saleResult.rows[0].id;
 
@@ -168,5 +173,85 @@ export const getSaleDetails = async (req: any, res: Response) => {
         res.json({ ...sale, items: itemsResult.rows });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching sale details' });
+    }
+};
+
+export const emitNfe = async (req: any, res: Response) => {
+    const { id } = req.params;
+    try {
+        const saleResult = await db.query('SELECT * FROM sales WHERE id = $1 AND is_deleted = FALSE', [id]);
+        const sale = saleResult.rows[0];
+        if (!sale) return res.status(404).json({ message: 'Venda não encontrada' });
+
+        if (sale.nfe_status === 'autorizado' || sale.nfe_status === 'processando_autorizacao') {
+            return res.status(400).json({ message: 'Esta venda já possui uma NFC-e emitida ou em processamento.' });
+        }
+
+        const itemsResult = await db.query(`
+            SELECT si.product_id, si.quantity, si.price_at_sale,
+                   COALESCE(p.name, si.service_name) as product_name,
+                   p.ncm, p.cfop, p.unidade
+            FROM sale_items si
+            LEFT JOIN products p ON si.product_id = p.id
+            WHERE si.sale_id = $1
+        `, [id]);
+
+        const nfeResult = await emitNfce(sale, itemsResult.rows);
+        const status = nfeResult.status || 'processando_autorizacao';
+
+        await db.query(
+            `UPDATE sales SET nfe_status = $1, nfe_ref = $2, nfe_error = NULL WHERE id = $3`,
+            [status, nfeResult.ref, id]
+        );
+
+        logActivity(req.user?.id, req.user?.username, 'emit_nfe', 'sale', id, `Solicitou emissão de NFC-e (ref ${nfeResult.ref})`);
+
+        res.json({ message: 'Emissão solicitada. Consulte o status em instantes.', ref: nfeResult.ref, status });
+    } catch (error: any) {
+        await db.query(`UPDATE sales SET nfe_status = 'erro', nfe_error = $1 WHERE id = $2`, [error.message, id]).catch(() => {});
+        res.status(400).json({ message: error.message });
+    }
+};
+
+export const getNfeStatus = async (req: any, res: Response) => {
+    const { id } = req.params;
+    try {
+        const saleResult = await db.query('SELECT * FROM sales WHERE id = $1', [id]);
+        const sale = saleResult.rows[0];
+        if (!sale) return res.status(404).json({ message: 'Venda não encontrada' });
+
+        if (!sale.nfe_ref) {
+            return res.json({ nfe_status: sale.nfe_status || 'nao_emitida' });
+        }
+
+        const statusData = await checkNfceStatus(sale.nfe_ref);
+        const status = statusData.status || sale.nfe_status;
+
+        await db.query(
+            `UPDATE sales SET
+                nfe_status = $1,
+                nfe_number = $2,
+                nfe_serie = $3,
+                nfe_key = $4,
+                nfe_danfe_url = $5,
+                nfe_xml_url = $6,
+                nfe_error = $7,
+                nfe_issued_at = CASE WHEN $1 = 'autorizado' AND nfe_issued_at IS NULL THEN NOW() ELSE nfe_issued_at END
+             WHERE id = $8`,
+            [
+                status,
+                statusData.numero || null,
+                statusData.serie || null,
+                statusData.chave_nfe || null,
+                statusData.caminho_danfe || statusData.url || null,
+                statusData.caminho_xml_nota_fiscal || null,
+                status === 'erro_autorizacao' ? (statusData.mensagem_sefaz || 'Erro na autorização da nota') : null,
+                id
+            ]
+        );
+
+        res.json({ ...statusData, nfe_status: status });
+    } catch (error: any) {
+        res.status(400).json({ message: error.message });
     }
 };

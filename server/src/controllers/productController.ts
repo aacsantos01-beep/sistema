@@ -40,7 +40,7 @@ export const getProductById = async (req: Request, res: Response) => {
 };
 
 export const createProduct = async (req: any, res: Response) => {
-    const { sku, name, category, supplier, price, stock } = req.body;
+    const { sku, name, category, supplier, price, stock, ncm, cfop, unidade } = req.body;
     const file = req.file as Express.Multer.File | undefined;
 
     try {
@@ -51,12 +51,12 @@ export const createProduct = async (req: any, res: Response) => {
         }
 
         const result = await db.query(
-            'INSERT INTO products (sku, name, category, supplier, price, stock, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-            [sku, name, category, supplier, price, stock, image_url]
+            'INSERT INTO products (sku, name, category, supplier, price, stock, image_url, ncm, cfop, unidade) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id',
+            [sku, name, category, supplier, price, stock, image_url, ncm || null, cfop || '5102', unidade || 'UN']
         );
         logActivity(req.user?.id, req.user?.username, 'create_product', 'product', result.rows[0].id, `Criou o produto "${name}" (SKU ${sku})`);
 
-        res.status(201).json({ id: result.rows[0].id, sku, name, category, supplier, price, stock, image_url });
+        res.status(201).json({ id: result.rows[0].id, sku, name, category, supplier, price, stock, image_url, ncm, cfop, unidade });
     } catch (error: any) {
         if (error.code === '23505') { // Postgres unique constraint violation
             return res.status(400).json({ message: 'SKU already exists' });
@@ -68,7 +68,7 @@ export const createProduct = async (req: any, res: Response) => {
 
 export const updateProduct = async (req: any, res: Response) => {
     const { id } = req.params;
-    const { sku, name, category, supplier, price, stock } = req.body;
+    const { sku, name, category, supplier, price, stock, ncm, cfop, unidade } = req.body;
     const file = req.file as Express.Multer.File | undefined;
 
     try {
@@ -86,14 +86,14 @@ export const updateProduct = async (req: any, res: Response) => {
         }
 
         const result = await db.query(
-            'UPDATE products SET sku = $1, name = $2, category = $3, supplier = $4, price = $5, stock = $6, image_url = $7 WHERE id = $8',
-            [sku, name, category, supplier, price, stock, image_url, id]
+            'UPDATE products SET sku = $1, name = $2, category = $3, supplier = $4, price = $5, stock = $6, image_url = $7, ncm = $8, cfop = $9, unidade = $10 WHERE id = $11',
+            [sku, name, category, supplier, price, stock, image_url, ncm || null, cfop || '5102', unidade || 'UN', id]
         );
         if (result.rowCount === 0) return res.status(404).json({ message: 'Product not found' });
 
         logActivity(req.user?.id, req.user?.username, 'update_product', 'product', id, `Atualizou o produto "${name}" (SKU ${sku})`);
 
-        res.json({ id, sku, name, category, supplier, price, stock, image_url });
+        res.json({ id, sku, name, category, supplier, price, stock, image_url, ncm, cfop, unidade });
     } catch (error: any) {
         console.error('Error updating product:', error);
         res.status(500).json({ message: 'Error updating product' });

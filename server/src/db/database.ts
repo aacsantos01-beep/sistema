@@ -55,6 +55,9 @@ const initDb = async () => {
                 price DECIMAL(10,2) NOT NULL,
                 stock INTEGER NOT NULL DEFAULT 0,
                 image_url TEXT,
+                ncm TEXT,
+                cfop TEXT DEFAULT '5102',
+                unidade TEXT DEFAULT 'UN',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -73,6 +76,17 @@ const initDb = async () => {
                 user_id INTEGER,
                 seller_id INTEGER,
                 payment_method TEXT,
+                customer_name TEXT,
+                customer_document TEXT,
+                nfe_status TEXT DEFAULT 'nao_emitida',
+                nfe_ref TEXT,
+                nfe_number TEXT,
+                nfe_serie TEXT,
+                nfe_key TEXT,
+                nfe_danfe_url TEXT,
+                nfe_xml_url TEXT,
+                nfe_error TEXT,
+                nfe_issued_at TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id),
                 FOREIGN KEY (seller_id) REFERENCES sellers(id)
@@ -145,6 +159,29 @@ const initDb = async () => {
 
             CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
             CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC);
+        `);
+
+        // Backfill columns for the NF-e (nota fiscal) feature on databases created before it existed.
+        // CREATE TABLE IF NOT EXISTS above is a no-op on tables that already exist, so these
+        // columns need to be added explicitly for pre-existing deployments.
+        await client.query(`
+            ALTER TABLE products ADD COLUMN IF NOT EXISTS ncm TEXT;
+            ALTER TABLE products ADD COLUMN IF NOT EXISTS cfop TEXT DEFAULT '5102';
+            ALTER TABLE products ADD COLUMN IF NOT EXISTS unidade TEXT DEFAULT 'UN';
+
+            ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_name TEXT;
+            ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_document TEXT;
+            ALTER TABLE sales ADD COLUMN IF NOT EXISTS nfe_status TEXT DEFAULT 'nao_emitida';
+            ALTER TABLE sales ADD COLUMN IF NOT EXISTS nfe_ref TEXT;
+            ALTER TABLE sales ADD COLUMN IF NOT EXISTS nfe_number TEXT;
+            ALTER TABLE sales ADD COLUMN IF NOT EXISTS nfe_serie TEXT;
+            ALTER TABLE sales ADD COLUMN IF NOT EXISTS nfe_key TEXT;
+            ALTER TABLE sales ADD COLUMN IF NOT EXISTS nfe_danfe_url TEXT;
+            ALTER TABLE sales ADD COLUMN IF NOT EXISTS nfe_xml_url TEXT;
+            ALTER TABLE sales ADD COLUMN IF NOT EXISTS nfe_error TEXT;
+            ALTER TABLE sales ADD COLUMN IF NOT EXISTS nfe_issued_at TIMESTAMP;
+
+            UPDATE sales SET nfe_status = 'nao_emitida' WHERE nfe_status IS NULL;
         `);
 
         // Create default admin user if not exists. Never seed a predictable password —

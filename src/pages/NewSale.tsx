@@ -9,6 +9,8 @@ const NewSale: React.FC = () => {
   const [sellers, setSellers] = useState<any[]>([]);
   const [selectedSeller, setSelectedSeller] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [customerName, setCustomerName] = useState<string>('');
+  const [customerDocument, setCustomerDocument] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -134,6 +136,8 @@ const NewSale: React.FC = () => {
           total_amount: total,
           seller_id: Number(selectedSeller),
           payment_method: paymentMethod,
+          customer_name: customerName || null,
+          customer_document: customerDocument || null,
           items: cart.map(item => ({
             productId: typeof item.id === 'number' ? item.id : null,
             service_name: item.isService ? item.name : null,
@@ -162,6 +166,8 @@ const NewSale: React.FC = () => {
       setCart([]);
       setSelectedSeller('');
       setPaymentMethod('');
+      setCustomerName('');
+      setCustomerDocument('');
       setShowReceiptModal(true);
       
       setTimeout(() => setSuccess(false), 3000);
@@ -318,8 +324,8 @@ const NewSale: React.FC = () => {
               <CreditCard size={18} />
               <span>Forma de Pagamento</span>
             </div>
-            <select 
-              value={paymentMethod} 
+            <select
+              value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="seller-select"
             >
@@ -329,6 +335,28 @@ const NewSale: React.FC = () => {
               <option value="Crédito">Cartão de Crédito</option>
               <option value="Débito">Cartão de Débito</option>
             </select>
+          </div>
+
+          <div className="payment-selection card">
+            <div className="card-header-small">
+              <User size={18} />
+              <span>Cliente (opcional, para Nota Fiscal)</span>
+            </div>
+            <input
+              type="text"
+              className="seller-select"
+              placeholder="Nome do cliente"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              style={{ marginBottom: '0.5rem' }}
+            />
+            <input
+              type="text"
+              className="seller-select"
+              placeholder="CPF do cliente"
+              value={customerDocument}
+              onChange={(e) => setCustomerDocument(e.target.value)}
+            />
           </div>
 
           <div className="cart-card card">

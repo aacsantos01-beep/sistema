@@ -196,6 +196,11 @@
   grid-column: span 2;
 }
 
+.help-text {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
 .form-actions {
   display: flex;
   gap: 1rem;
